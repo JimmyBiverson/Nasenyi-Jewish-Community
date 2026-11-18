@@ -1,19 +1,26 @@
 <article class="story-card" data-reveal>
     <a href="{{ url($post->slug) }}/" class="story-card-link">
-        @if($post->image)
-            <div class="story-card-media">
-                <img src="{{ $post->image }}" alt="" width="600" height="370" loading="lazy" decoding="async">
-            </div>
-        @endif
+        @php
+            $positionX = \App\Support\PublicImage::position($post->image_position_x);
+            $positionY = \App\Support\PublicImage::position($post->image_position_y);
+        @endphp
+        <div class="story-card-media" style="--photo-position: {{ $positionX }}% {{ $positionY }}%">
+            <img src="{{ $post->image ?: \App\Support\SiteBranding::image('social_image') }}" alt="" loading="lazy" decoding="async">
+        </div>
         <div class="story-card-content">
-            @if($post->published_at)
-                <time datetime="{{ $post->published_at->toDateString() }}">{{ $post->published_at->format('j F Y') }}</time>
-            @endif
+            <div class="story-card-meta">
+                @if($post->category)
+                    <span>{{ $post->category }}</span>
+                @endif
+                @if($post->published_at)
+                    <time datetime="{{ $post->published_at->toDateString() }}">{{ $post->published_at->format('j F Y') }}</time>
+                @endif
+            </div>
             <h3>{{ $post->title }}</h3>
             @if($post->summary)
                 <p>{{ \Illuminate\Support\Str::limit($post->summary, 140) }}</p>
             @endif
-            <span class="story-card-arrow" aria-hidden="true">Read story →</span>
+            <span class="story-card-arrow" aria-hidden="true">Read story <span>→</span></span>
         </div>
     </a>
 </article>

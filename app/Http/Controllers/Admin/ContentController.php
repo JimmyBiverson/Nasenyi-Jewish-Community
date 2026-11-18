@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
 use App\Support\ContentHtml;
+use App\Support\StoryMedia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -76,7 +77,7 @@ class ContentController extends Controller
             'body' => ['nullable', 'string', 'max:700000'],
             'summary' => ['nullable', 'string', 'max:1000'],
             'image' => ['nullable', 'string', 'max:2048'],
-            'image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:8192'],
+            'image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:'.StoryMedia::uploadLimit()],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:600'],
             'social_image' => ['nullable', 'string', 'max:2048'],
@@ -140,7 +141,12 @@ class ContentController extends Controller
                 if (filled($validatedSlide['href'] ?? null) && ! ContentHtml::safeUrl($validatedSlide['href'], link: true)) {
                     throw ValidationException::withMessages([$slideKey.'.href' => 'Use a website path, an HTTP(S) address, or a page anchor.']);
                 }
-                $data['hero_slides'][] = $validatedSlide + ['description' => '', 'label' => '', 'href' => ''];
+                $original = $entry->hero_slides[$index] ?? [];
+                $crop = $validatedSlide['image'] === ($original['image'] ?? null)
+                    ? array_intersect_key($original, array_flip(['position_x', 'position_y', 'fit']))
+                    : [];
+
+                $data['hero_slides'][] = $validatedSlide + $crop + ['description' => '', 'label' => '', 'href' => ''];
             }
         }
 

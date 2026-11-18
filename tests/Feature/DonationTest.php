@@ -184,6 +184,34 @@ class DonationTest extends TestCase
         Queue::assertPushed(SendDonationReceipt::class, 1);
     }
 
+    public function test_a_donor_can_check_a_pending_payment_when_the_ipn_has_not_arrived(): void
+    {
+        $donation = Donation::factory()->create(['pesapal_tracking_id' => (string) Str::uuid()]);
+        $this->fakeStatus($donation, ['status_code' => 0, 'payment_status_description' => 'Invalid']);
+
+        $callback = $this->get($this->noticeUrl($donation, 'callback', 'CALLBACKURL'))->assertStatus(303);
+        $this->get($callback->headers->get('Location'))->assertOk()->assertSee('Check payment status');
+        $this->assertSame('pending', $donation->refresh()->status);
+
+        $route = ['donation' => $donation->reference];
+        $this->post(route('donations.refresh', $route))->assertForbidden();
+        $signedRefresh = URL::temporarySignedRoute('donations.refresh', now()->addMinutes(15), $route, absolute: false);
+
+        $this->fakeStatus($donation, ['status' => '503']);
+        $this->post($signedRefresh)->assertStatus(303)->assertSessionHas('payment_status_warning');
+        $this->assertSame('pending', $donation->refresh()->status);
+        $this->assertDatabaseCount('jobs', 0);
+
+        $this->fakeStatus($donation, ['status_code' => 1, 'payment_status_description' => 'Completed']);
+        $result = $this->post($signedRefresh)->assertStatus(303);
+        $this->get($result->headers->get('Location'))->assertOk()->assertSee('Payment confirmed')->assertDontSee('Check payment status');
+        $this->post($signedRefresh)->assertStatus(303);
+
+        $this->assertSame('completed', $donation->refresh()->status);
+        Http::assertSentCount(2);
+        $this->assertDatabaseCount('jobs', 1);
+    }
+
     public function test_a_verified_failure_is_recorded_without_a_receipt(): void
     {
         Queue::fake();

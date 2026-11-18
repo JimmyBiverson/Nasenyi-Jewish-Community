@@ -8,26 +8,23 @@
     <meta name="description" content="{{ $description ?: 'Makor Chayim, the Nasenyi Abayudaya Jewish community in Uganda.' }}">
     <meta name="robots" content="{{ $noindex || ! app()->isProduction() ? 'noindex,nofollow' : 'index,follow' }}">
     <link rel="canonical" href="{{ $canonicalUrl }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="/media/brand/icon-32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/media/brand/icon-192.png">
-    <link rel="apple-touch-icon" href="/media/brand/apple-touch-icon.png">
-    @if(!empty($preloadImage))
-        <link rel="preload" as="image" href="{{ $preloadImage }}" fetchpriority="high">
-    @endif
+    <link rel="icon" href="{{ $favicon }}">
+    <link rel="apple-touch-icon" href="{{ $logo }}">
     <meta property="og:site_name" content="{{ $siteName }}">
     <meta property="og:type" content="{{ $kind }}">
     <meta property="og:title" content="{{ $siteTitle }}">
     <meta property="og:description" content="{{ $description ?: 'Makor Chayim, the Nasenyi Abayudaya Jewish community in Uganda.' }}">
     <meta property="og:url" content="{{ $canonicalUrl }}">
-    <meta property="og:image" content="{{ str_starts_with($socialImage, 'http') ? $socialImage : url($socialImage) }}">
+    <meta property="og:image" content="{{ url($socialImage) }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $siteTitle }}">
     <meta name="twitter:description" content="{{ $description ?: 'Makor Chayim, the Nasenyi Abayudaya Jewish community in Uganda.' }}">
+    <meta name="twitter:image" content="{{ url($socialImage) }}">
     <script type="application/ld+json">{!! Illuminate\Support\Js::encode($organization) !!}</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @fonts
 </head>
-<body>
+<body style="--post-image-ratio: {{ str_replace(':', ' / ', $blogImageRatio) }}; --post-image-fit: {{ $blogImageFit }}">
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="scroll-progress" data-scroll-progress aria-hidden="true"></div>
     <header class="site-header" data-header>
@@ -39,7 +36,9 @@
             <button class="menu-button" type="button" aria-controls="main-navigation" aria-expanded="false" data-menu-toggle hidden>
                 <span class="menu-icon" aria-hidden="true"></span> Menu
             </button>
-            <nav id="main-navigation" class="primary-nav" aria-label="Main navigation">
+            <div class="navigation-panel" data-menu-panel>
+                <div class="navigation-clip">
+                    <nav id="main-navigation" class="primary-nav" aria-label="Main navigation">
                 @if($available->has('about-us'))
                     <a href="{{ url('about-us') }}/" @if(request()->is('about-us')) aria-current="page" @endif>About</a>
                 @endif
@@ -58,11 +57,23 @@
                 <a href="{{ route('site.gallery') }}/" @if(request()->is('donation-history')) aria-current="page" @endif>Gallery</a>
                 <a href="{{ route('site.contact') }}/" @if(request()->is('contact-us')) aria-current="page" @endif>Contact</a>
                 <a class="search-link" href="{{ route('site.search') }}" aria-label="Search the website" @if(request()->is('search')) aria-current="page" @endif><span aria-hidden="true"></span><span class="search-text">Search</span></a>
-                <a class="button button-gold header-donate" href="{{ url('donation') }}/">Donate <span aria-hidden="true">→</span></a>
-            </nav>
+                <a class="button button-gold header-donate" href="{{ route('donations.show') }}">Donate <span aria-hidden="true">→</span></a>
+                    </nav>
+                </div>
+            </div>
         </div>
     </header>
-    <main id="main-content">{{ $slot }}</main>
+    <main id="main-content">
+        {{ $slot }}
+        @unless(request()->routeIs('donations.*'))
+            <section class="wrapper giving-section" aria-labelledby="giving-heading">
+                <div class="giving-panel" data-reveal="up">
+                    <h2 id="giving-heading">Support the Nasenyi Jewish Community</h2>
+                    <a class="button button-gold" href="{{ route('donations.show') }}">Donate <span aria-hidden="true">→</span></a>
+                </div>
+            </section>
+        @endunless
+    </main>
     <footer class="site-footer">
         <div class="wrapper footer-grid">
             <div class="footer-about">
@@ -70,7 +81,6 @@
                     <img src="{{ $logo }}" alt="" width="52" height="52" loading="lazy" decoding="async">
                     <span><strong>Nasenyi</strong><small>Abayudaya Community</small></span>
                 </a>
-                <p class="footer-tagline">Makor Chayim — a living Jewish community preserving faith, tradition, and resilience in eastern Uganda.</p>
                 @if(filled($settings['location'] ?? null))
                     <p class="footer-location">{{ $settings['location'] }}</p>
                 @endif
@@ -95,7 +105,7 @@
                     <a href="{{ route('site.events') }}/">Events</a>
                     <a href="{{ route('site.gallery') }}/">Gallery</a>
                     <a href="{{ route('site.contact') }}/">Contact us</a>
-                    <a href="{{ url('donation') }}/">Support Nasenyi</a>
+                    <a href="{{ route('donations.show') }}">Support Nasenyi</a>
                     @if(filled($settings['contact_email'] ?? null))
                         <a href="mailto:{{ $settings['contact_email'] }}">{{ $settings['contact_email'] }}</a>
                     @endif

@@ -51,6 +51,8 @@
     .field{display:grid;gap:.35rem;align-content:start;margin-bottom:.6rem}
     .field>label,.label,legend{font-weight:690}
     .field small,.editor-note{color:var(--subtle)}
+    .branding-preview{width:min(100%,15rem);height:5rem;border:1px solid var(--line);border-radius:.5rem;object-fit:contain;object-position:left center;background:#f8fafc;padding:.3rem}
+    .brand img{width:2.25rem;height:2.25rem;object-fit:contain}
     .full{grid-column:1/-1}
     input:not([type=checkbox]),select,textarea,.editor-content{width:100%;min-width:0;background:#fff;color:var(--ink);border:1px solid #b8c3d7;border-radius:.42rem;min-height:2.55rem;padding:.52rem .68rem;font:inherit}
     textarea{resize:vertical}
@@ -68,6 +70,19 @@
     dd{margin:0}
     .body-text{white-space:pre-wrap;overflow-wrap:anywhere}
     .preview-image{max-width:16rem;border-radius:.4rem}
+    .media-nav{display:flex;gap:.55rem;flex-wrap:wrap;margin:0 0 1.25rem}
+    .media-stack{display:grid;gap:.95rem}
+    .media-stack h2{margin:1rem 0 .05rem;font-size:1.35rem}
+    .image-form{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1fr);gap:1.25rem;scroll-margin-top:1rem}
+    .image-form h3{margin:0 0 .45rem;font-size:1.05rem;overflow-wrap:anywhere}
+    .image-form-caption{margin:0 0 .65rem;overflow-wrap:anywhere}
+    .image-form-frame{overflow:hidden;border-radius:.5rem;background:#eaf0f6;border:1px solid var(--line)}
+    .image-form-frame img{display:block;width:100%;height:100%}
+    .image-form-frame img[hidden]{display:none}
+    .image-form-fields{min-width:0;align-self:center}
+    .image-form-fields input[type=file]{font-size:.85rem}
+    .media-focal-point.form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+    @media(max-width:730px){.image-form{grid-template-columns:minmax(0,1fr);gap:.85rem}}
     .login{max-width:29rem;margin:clamp(4rem,11vh,9rem) auto 0;padding:clamp(1rem,5vw,2rem)}
     .login-wrap{padding:0 1rem}
     .login .field{margin-bottom:1rem}

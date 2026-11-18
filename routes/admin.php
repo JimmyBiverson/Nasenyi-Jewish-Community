@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CollectionController;
 use App\Http\Controllers\Admin\ContentController;
+use App\Http\Controllers\Admin\ContentMediaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DonationReportController;
 use App\Http\Controllers\Admin\InboxController;
@@ -19,6 +20,14 @@ Route::prefix('admin')->group(function (): void {
     Route::name('admin.')->middleware(['auth', 'auth.session', RequireStaff::class])->group(function (): void {
         Route::get('/', DashboardController::class)->name('dashboard');
         Route::resource('content', ContentController::class)->except('show');
+        Route::prefix('content/{content}/media')->name('content.media.')->controller(ContentMediaController::class)
+            ->group(function (): void {
+                Route::get('/', 'edit')->name('edit');
+                Route::patch('featured', 'featured')->name('featured');
+                Route::patch('banner', 'header')->name('header');
+                Route::patch('section/{image}', 'section')->where('image', '[0-9a-f]{64}')->name('section');
+                Route::patch('slide/{slide}', 'slide')->whereNumber('slide')->name('slide');
+            });
         Route::prefix('manage/{collection}')
             ->where(['collection' => 'gallery|events|causes'])
             ->name('collections.')

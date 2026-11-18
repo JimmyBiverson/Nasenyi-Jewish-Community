@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>Sign in · Nasenyi Administration</title>
+    <link rel="icon" href="{{ \App\Support\SiteBranding::image('logo') }}">
     @include('admin.styles')
 </head>
 <body class="login-wrap">

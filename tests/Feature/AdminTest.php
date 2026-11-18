@@ -8,6 +8,7 @@ use App\Models\ContentEntry;
 use App\Models\Donation;
 use App\Models\DonationCause;
 use App\Models\GalleryImage;
+use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -182,5 +183,63 @@ class AdminTest extends TestCase
         $this->assertSame('editor', $editor->role);
         $this->assertTrue(Hash::check('an editor password', $editor->password));
         $this->delete(route('admin.users.destroy', $admin))->assertForbidden();
+    }
+
+    public function test_branding_updates_the_website_and_admin_and_preserves_featured_images(): void
+    {
+        $this->withoutVite();
+        Storage::fake('public');
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+
+        $this->get(route('site.home'))->assertOk()->assertSee('<link rel="icon" href="/media/brand/icon-32.png">', false);
+        $this->get(route('admin.settings.edit'))->assertOk()->assertSeeInOrder(['Site logo', 'Site favicon', 'Default site image']);
+
+        $preferences = array_fill_keys([
+            'site_name', 'contact_email', 'phone', 'location', 'facebook_url', 'youtube_url', 'instagram_url',
+        ], null);
+        $this->patch(route('admin.settings.update'), $preferences + [
+            'logo_upload' => UploadedFile::fake()->image('nasenyi-logo.png'),
+            'favicon_upload' => UploadedFile::fake()->image('website-tab.png', 32, 32),
+            'social_image_upload' => UploadedFile::fake()->image('nasenyi-social.jpg', 120, 63),
+        ])->assertRedirect(route('admin.settings.edit'))->assertSessionHasNoErrors();
+
+        $images = SiteSetting::whereIn('key', ['logo', 'favicon', 'social_image'])->pluck('value', 'key');
+        foreach ($images as $path) {
+            Storage::disk('public')->assertExists(str_replace('/storage/', '', $path));
+        }
+
+        $this->get(route('site.home'))->assertOk()
+            ->assertSee('<link rel="icon" href="'.$images['favicon'].'">', false)
+            ->assertSee('<img src="'.$images['logo'].'"', false)
+            ->assertSee('<meta property="og:image" content="'.url($images['social_image']).'">', false);
+        $this->get(route('admin.dashboard'))->assertOk()
+            ->assertSee('<link rel="icon" href="'.$images['logo'].'">', false)
+            ->assertDontSee($images['favicon']);
+
+        $post = ContentEntry::factory()->create(['type' => 'post', 'image' => '/media/article-featured.jpg']);
+        ContentEntry::factory()->create(['type' => 'post', 'image' => null]);
+        $this->get(url($post->slug))->assertOk()
+            ->assertSee('<meta property="og:image" content="'.url('/media/article-featured.jpg').'">', false);
+        $this->get(route('site.updates'))->assertOk()
+            ->assertSee('<img src="'.$images['social_image'].'"', false);
+
+        $html = UploadedFile::fake()->createWithContent('page.html', '<!doctype html><html>Not an icon</html>');
+        $this->from(route('admin.settings.edit'))->patch(route('admin.settings.update'), $preferences + [
+            'favicon_upload' => new UploadedFile($html->getPathname(), 'fake.ico', 'image/vnd.microsoft.icon', test: true),
+            'logo' => 'javascript:alert(1)',
+        ])->assertSessionHasErrors(['favicon_upload']);
+        $this->from(route('admin.settings.edit'))->patch(route('admin.settings.update'), $preferences + [
+            'logo' => 'javascript:alert(1)',
+        ])->assertSessionHasErrors('logo');
+        $this->assertDatabaseHas('site_settings', ['key' => 'logo', 'value' => $images['logo']]);
+
+        $this->patch(route('admin.settings.update'), $preferences + [
+            'favicon' => 'https://cdn.example.org/nasenyi.ico',
+        ])->assertRedirect(route('admin.settings.edit'))->assertSessionHasNoErrors();
+        $this->get(route('site.home'))->assertOk()
+            ->assertSee('<link rel="icon" href="https://cdn.example.org/nasenyi.ico">', false);
+
+        $this->post(route('admin.logout'));
+        $this->get(route('login'))->assertOk()->assertSee('<link rel="icon" href="'.$images['logo'].'">', false);
     }
 }

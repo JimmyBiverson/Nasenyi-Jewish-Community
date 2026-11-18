@@ -11,4 +11,6 @@ Route::prefix('donation')->name('donations.')->controller(DonationController::cl
     Route::get('/cancel/{donation:reference}', 'cancel')->whereUuid('donation')
         ->middleware('signed:relative,OrderTrackingId,OrderNotificationType,OrderMerchantReference')->name('cancel');
     Route::get('/status/{donation:reference}', 'status')->whereUuid('donation')->middleware('signed:relative')->name('status');
+    Route::post('/status/{donation:reference}/refresh', 'refreshStatus')->whereUuid('donation')
+        ->middleware(['signed:relative', 'throttle:8,1,donation-status'])->name('refresh');
 });

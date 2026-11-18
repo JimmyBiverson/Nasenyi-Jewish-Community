@@ -1,4 +1,4 @@
-<x-site-layout title="Community Events" description="Upcoming gatherings, celebrations, and community events at Nasenyi." image="/media/headers/events.jpg">
+<x-site-layout title="Community Events" description="Upcoming gatherings, celebrations, and community events at Nasenyi.">
     @include('site.partials.page-header', ['heading' => 'Community Events', 'image' => '/media/headers/events.jpg', 'subtitle' => 'Gatherings, celebrations, and moments shared together in Nasenyi.'])
     <section class="wrapper listing-section" aria-label="Events" data-reveal>
         <ul class="event-list">

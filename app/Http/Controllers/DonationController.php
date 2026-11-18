@@ -149,6 +149,17 @@ class DonationController extends Controller
             ->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
+    public function refreshStatus(Donation $donation): RedirectResponse
+    {
+        if ($donation->status === 'pending' && $donation->pesapal_tracking_id !== null &&
+            ! $this->verify($donation, $donation->pesapal_tracking_id)) {
+            return $this->statusRedirect($donation)
+                ->with('payment_status_warning', 'We couldn’t check your payment with Pesapal. Please try again in a moment.');
+        }
+
+        return $this->statusRedirect($donation);
+    }
+
     /** @return array{reference: string, trackingId: string}|null */
     private function readNotice(Request $request, string $expectedType): ?array
     {

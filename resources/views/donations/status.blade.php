@@ -25,8 +25,8 @@
                     <p>Pesapal reported that this payment was reversed.</p>
                     @break
                 @default
-                    @if($donation->checkout_url)
-                        <p>We’re waiting for payment confirmation. Refresh this page to check for an update.</p>
+                    @if($donation->pesapal_tracking_id)
+                        <p>We’re waiting for payment confirmation. You can check with Pesapal for an update below.</p>
                     @else
                         <p>We couldn’t open the checkout. Keep the reference below if you contact us for help.</p>
                     @endif
@@ -37,6 +37,15 @@
                 <div><dt>Reference</dt><dd class="break-all">{{ $donation->reference }}</dd></div>
             </dl>
 
+            @if(session('payment_status_warning'))
+                <p class="form-error" role="alert">{{ session('payment_status_warning') }}</p>
+            @endif
+            @if($donation->status === 'pending' && $donation->pesapal_tracking_id)
+                <form method="post" action="{{ URL::temporarySignedRoute('donations.refresh', now()->addMinutes(15), ['donation' => $donation->reference], absolute: false) }}">
+                    @csrf
+                    <button type="submit" class="button button-gold">Check payment status</button>
+                </form>
+            @endif
             <a class="button button-gold" href="{{ route('donations.show') }}">Back to donations</a>
         </div>
         <div class="prose">

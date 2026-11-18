@@ -1,11 +1,11 @@
 <x-site-layout
     :title="$entry?->seo_title ?: ($entry?->title ?: 'Gallery')"
     :description="$entry?->seo_description ?: $entry?->summary"
-    :image="$entry?->social_image ?: $entry?->image ?: '/media/headers/gallery.jpg'"
+    :image="$entry?->social_image ?: $entry?->image"
 >
-    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Gallery', 'image' => $entry?->image ?: '/media/headers/gallery.jpg', 'subtitle' => 'Moments of prayer, learning, celebration, and everyday life in Nasenyi.'])
+    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Gallery', 'image' => '/media/headers/gallery.webp', 'override' => $entry?->header_image])
     @if(filled($entry?->body))
-        <div class="wrapper prose index-intro" data-reveal>{!! $entry->body !!}</div>
+        <div class="wrapper prose index-intro">{!! \App\Support\StoryLayout::render($entry) !!}</div>
     @endif
     <section class="wrapper listing-section" aria-label="Community photos" data-reveal>
         <div class="gallery-grid" data-gallery>

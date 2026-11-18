@@ -1,4 +1,4 @@
-<x-site-layout title="Search" description="Search pages and stories from the Nasenyi Abayudaya community." image="/media/headers/search.jpg" :noindex="true">
+<x-site-layout title="Search" description="Search pages and stories from the Nasenyi Abayudaya community." :noindex="true">
     @include('site.partials.page-header', ['heading' => 'Search', 'image' => '/media/headers/search.jpg', 'subtitle' => 'Find pages, stories, and community updates.'])
     <section class="wrapper listing-section" aria-labelledby="search-label" data-reveal>
         <form class="search-form" action="{{ route('site.search') }}" role="search">

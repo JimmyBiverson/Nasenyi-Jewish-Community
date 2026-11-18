@@ -1,4 +1,4 @@
-<x-site-layout :title="$event->title" :description="\Illuminate\Support\Str::limit($event->description, 150)" image="/media/headers/events.jpg">
+<x-site-layout :title="$event->title" :description="\Illuminate\Support\Str::limit($event->description, 150)">
     @include('site.partials.page-header', [
         'heading' => $event->title,
         'image' => '/media/headers/events.jpg',

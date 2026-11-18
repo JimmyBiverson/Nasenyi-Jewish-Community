@@ -1,3 +1,4 @@
+@php($logo = \App\Support\SiteBranding::image('logo'))
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>@yield('title') · Nasenyi Administration</title>
+    <link rel="icon" href="{{ $logo }}">
     @include('admin.styles')
 </head>
 <body>
@@ -12,6 +14,7 @@
 <div class="shell">
     <aside class="sidebar">
         <a class="brand" href="{{ route('admin.dashboard') }}">
+            <img src="{{ $logo }}" alt="" width="36" height="36">
             <span>Nasenyi <small>Administration</small></span>
         </a>
         <nav aria-label="Administration">

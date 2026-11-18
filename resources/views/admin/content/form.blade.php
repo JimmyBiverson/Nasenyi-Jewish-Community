@@ -4,8 +4,13 @@
     <a class="breadcrumbs" href="{{ route('admin.content.index', ['type' => $entry->type]) }}">← {{ $entry->type === 'post' ? 'Posts' : 'Pages' }}</a>
     <header class="page-head">
         <h1>{{ $entry->exists ? 'Edit '.$entry->type : 'New '.$entry->type }}</h1>
-        @if($entry->exists && $entry->status === 'published')
-            <a class="button ghost" href="{{ url($entry->slug === '' ? '/' : '/'.$entry->slug.'/') }}">View published {{ $entry->type }}</a>
+        @if($entry->exists)
+            <div class="actions">
+                <a class="button" href="{{ route('admin.content.media.edit', $entry) }}">Manage images</a>
+                @if($entry->status === 'published')
+                    <a class="button ghost" href="{{ url($entry->slug === '' ? '/' : '/'.$entry->slug.'/') }}">View published {{ $entry->type }}</a>
+                @endif
+            </div>
         @endif
     </header>
     <form id="content-form" class="panel" action="{{ $entry->exists ? route('admin.content.update', $entry) : route('admin.content.store') }}" method="post" enctype="multipart/form-data">
@@ -85,7 +90,7 @@
             <div class="field">
                 <label for="image-upload">Upload a featured image</label>
                 <input id="image-upload" name="image_upload" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
-                <small>Up to 8 MB. An upload replaces the image path above.</small>
+                <small>Up to {{ \Illuminate\Support\Number::fileSize(\App\Support\StoryMedia::uploadLimit() * 1024, precision: 1) }}. An upload replaces the image path above.</small>
             </div>
             @if($entry->type === 'post')
                 <div class="field">

@@ -33,17 +33,56 @@ class PublicWebsiteTest extends TestCase
             'About Nasenyi',
             'Jacob Mwosuko',
             'Our pillars',
+            'Prayer, traditions, cultural identity, learning and festivals',
+            'Community & Spiritual Life',
             'A Ugandan Seder: Passover 2026 in Nasenyi',
             'The 8 Kilometers of Faith',
             'The Legacy of Leadership',
             'Latest Community Updates',
         ]);
-        $this->get('/about-us/')->assertOk()->assertSeeInOrder(['1919', 'Mishael Birogi', 'Jacob Mwosuko']);
+        $this->get('/about-us/')->assertOk()
+            ->assertSeeInOrder(['1919', 'Mishael Birogi', 'Jacob Mwosuko', 'Donation of Land for the Nasenyi Synagogue'])
+            ->assertSee('/media/community/land-dji-0911.jpeg')
+            ->assertSee('/media/community/land-kqm5505.jpeg')
+            ->assertSee('giving-heading')
+            ->assertSee(route('donations.show'));
+        $this->get('/donation/')->assertOk()->assertDontSee('giving-heading');
+        $this->get('/updates/')->assertOk()->assertSeeInOrder(['Nasenyi Latest Updates', 'David and Itai teaching']);
         $this->get('/checkout-2/')->assertOk()->assertSee('Heritage');
         $this->get('/my-account/')->assertOk()->assertSee('The 8 Kilometers of Faith');
         $this->get('/site/about-us/')->assertMovedPermanently()->assertRedirect(url('about-us').'/');
         $this->get('/product/donation-to-nasenyi-jewish-community')->assertMovedPermanently()->assertRedirect(url('donation').'/');
         $this->get('/probiv-test-post/')->assertNotFound();
+    }
+
+    public function test_public_images_use_shared_blog_frames_and_keep_uploaded_banner_paths(): void
+    {
+        SiteSetting::factory()->create(['key' => 'blog_image_ratio', 'value' => '16:9']);
+        SiteSetting::factory()->create(['key' => 'blog_image_fit', 'value' => 'contain']);
+        SiteSetting::factory()->create(['key' => 'inner_header_image', 'value' => '/storage/content/shared.jpg']);
+
+        $post = ContentEntry::factory()->create([
+            'type' => 'post',
+            'image' => '/storage/content/post.jpg',
+            'image_position_x' => 25,
+            'image_position_y' => 65,
+        ]);
+        ContentEntry::factory()->create(['type' => 'post', 'image' => null]);
+
+        $index = $this->get('/updates/')->assertOk()
+            ->assertSee('--post-image-ratio: 16 / 9; --post-image-fit: contain')
+            ->assertSee('class="page-hero"', false)
+            ->assertSee('/storage/content/shared.jpg')
+            ->assertDontSee('/storage/content/shared.webp')
+            ->assertSee('--photo-position: 25% 65%')
+            ->assertSee('/storage/content/post.jpg');
+        $this->assertSame(2, substr_count($index->getContent(), 'class="story-card-media"'));
+
+        $post->update(['header_image' => '/storage/content/article-banner.jpg']);
+        $this->get('/'.$post->slug.'/')->assertOk()
+            ->assertSee('class="page-hero"', false)
+            ->assertSee('/storage/content/article-banner.jpg')
+            ->assertDontSee('/storage/content/article-banner-sm.jpg');
     }
 
     public function test_unpublished_content_is_excluded_from_public_routes_and_search(): void

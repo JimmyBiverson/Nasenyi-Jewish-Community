@@ -16,7 +16,7 @@
             <p class="subtle">No {{ $type === 'post' ? 'posts' : 'pages' }} found.</p>
         @else
             <div class="table-scroll"><table>
-                <thead><tr><th scope="col">Title</th><th scope="col">Address</th><th scope="col">Status</th><th scope="col">Updated</th></tr></thead>
+                <thead><tr><th scope="col">Title</th><th scope="col">Address</th><th scope="col">Status</th><th scope="col">Updated</th><th scope="col">Images</th></tr></thead>
                 <tbody>
                 @foreach($entries as $record)
                     <tr>
@@ -24,6 +24,7 @@
                         <td>{{ $record->slug === '' ? '/' : '/'.$record->slug.'/' }}</td>
                         <td><span class="pill">{{ ucfirst($record->status) }}</span></td>
                         <td>{{ $record->updated_at?->format('j M Y') }}</td>
+                        <td><a href="{{ route('admin.content.media.edit', $record) }}" aria-label="Manage images for {{ $record->title }}">Manage</a></td>
                     </tr>
                 @endforeach
                 </tbody>

@@ -1,12 +1,12 @@
 <x-site-layout
     :title="$entry?->seo_title ?: ($entry?->title ?: 'Contact Us')"
     :description="$entry?->seo_description ?: $entry?->summary"
-    :image="$entry?->social_image ?: $entry?->image ?: '/media/headers/contact.jpg'"
+    :image="$entry?->social_image ?: $entry?->image"
 >
-    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Contact Us', 'image' => $entry?->image ?: '/media/headers/contact.jpg', 'subtitle' => 'We welcome your questions, messages, and connections.'])
+    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Contact Us', 'image' => '/media/headers/contact.webp', 'override' => $entry?->header_image])
     <div class="wrapper contact-layout" data-reveal>
         @if(filled($entry?->body))
-            <div class="prose contact-info">{!! $entry->body !!}</div>
+            <div class="prose contact-info">{!! \App\Support\StoryLayout::render($entry) !!}</div>
         @endif
         <form class="contact-form" action="{{ route('site.contact.store') }}" method="post">
             @csrf

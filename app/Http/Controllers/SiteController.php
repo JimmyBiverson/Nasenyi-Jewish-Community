@@ -40,6 +40,9 @@ class SiteController extends Controller
         return view('site.updates', [
             'entry' => $this->pageEntry('updates'),
             'posts' => $posts,
+            'category' => $category,
+            'categories' => ContentEntry::published()->where('type', 'post')
+                ->whereNotNull('category')->where('category', '!=', '')->distinct()->orderBy('category')->pluck('category'),
             'filtered' => $category !== '' || $tag !== '',
         ]);
     }
