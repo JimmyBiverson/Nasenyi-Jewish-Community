@@ -1,9 +1,10 @@
-<x-site-layout :title="$event->title" :description="\Illuminate\Support\Str::limit($event->description, 150)">
+<x-site-layout :title="$event->title" :description="\Illuminate\Support\Str::limit($event->description, 150)" image="/media/headers/events.jpg">
     @include('site.partials.page-header', [
         'heading' => $event->title,
+        'image' => '/media/headers/events.jpg',
         'parent' => ['label' => 'Community Events', 'url' => route('site.events').'/'],
     ])
-    <article class="wrapper entry-story">
+    <article class="wrapper entry-story" data-reveal>
         <div class="article-meta">
             <time datetime="{{ $event->starts_at->toAtomString() }}">{{ $event->starts_at->setTimezone('Africa/Kampala')->format('j F Y, H:i') }} EAT</time>
             @if($event->ends_at)

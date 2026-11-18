@@ -18,13 +18,14 @@ class SiteLayout extends Component
         public ?string $canonical = null,
         public string $kind = 'website',
         public bool $noindex = false,
+        public ?string $preloadImage = null,
     ) {}
 
     public function render(): View
     {
         $settings = SiteSetting::pluck('value', 'key')->all();
         $siteName = $settings['site_name'] ?? 'Nasenyi Abayudaya Community';
-        $logo = $settings['logo'] ?? '/media/community/logo.jpeg';
+        $logo = $settings['logo'] ?? '/media/brand/icon-192.png';
         $navigation = [
             'community-spiritual-life' => 'Community & Spiritual Life',
             'community-life' => 'Community Life',
@@ -44,7 +45,7 @@ class SiteLayout extends Component
             'Instagram' => $settings['instagram_url'] ?? null,
             'YouTube' => $settings['youtube_url'] ?? null,
         ])->filter(fn ($link): bool => is_string($link) && ContentHtml::safeUrl($link));
-        $socialImage = $this->image ?: ($settings['social_image'] ?? '/media/community/dji-0909.jpg');
+        $socialImage = $this->image ?: ($settings['social_image'] ?? '/media/headers/about.jpg');
         $canonicalUrl = $this->canonical ?: (request()->path() === '/' ? url('/') : url(request()->path()).'/');
         $siteTitle = Str::contains($this->title, $siteName, ignoreCase: true)
             ? $this->title
@@ -61,6 +62,6 @@ class SiteLayout extends Component
         return view('components.site-layout', compact(
             'settings', 'siteName', 'logo', 'communityLinks', 'available', 'socialLinks', 'socialImage', 'canonicalUrl',
             'siteTitle', 'organization',
-        ));
+        ) + ['preloadImage' => $this->preloadImage ?: $this->image]);
     }
 }

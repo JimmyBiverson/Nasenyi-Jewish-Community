@@ -1,16 +1,16 @@
 <x-site-layout
     :title="$entry?->seo_title ?: ($entry?->title ?: 'Gallery')"
     :description="$entry?->seo_description ?: $entry?->summary"
-    :image="$entry?->social_image ?: $entry?->image"
+    :image="$entry?->social_image ?: $entry?->image ?: '/media/headers/gallery.jpg'"
 >
-    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Gallery', 'image' => $entry?->image])
+    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Gallery', 'image' => $entry?->image ?: '/media/headers/gallery.jpg', 'subtitle' => 'Moments of prayer, learning, celebration, and everyday life in Nasenyi.'])
     @if(filled($entry?->body))
-        <div class="wrapper prose index-intro">{!! $entry->body !!}</div>
+        <div class="wrapper prose index-intro" data-reveal>{!! $entry->body !!}</div>
     @endif
-    <section class="wrapper listing-section" aria-label="Community photos">
+    <section class="wrapper listing-section" aria-label="Community photos" data-reveal>
         <div class="gallery-grid" data-gallery>
             @foreach($images as $image)
-                <figure>
+                <figure data-reveal>
                     <a href="{{ $image->path }}" data-lightbox data-caption="{{ $image->caption ?: $image->title }}">
                         <img src="{{ $image->path }}" alt="{{ $image->alt_text }}" loading="lazy" decoding="async">
                     </a>

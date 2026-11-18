@@ -1,10 +1,10 @@
 <x-site-layout
     :title="$entry?->seo_title ?: ($entry?->title ?: 'Contact Us')"
     :description="$entry?->seo_description ?: $entry?->summary"
-    :image="$entry?->social_image ?: $entry?->image"
+    :image="$entry?->social_image ?: $entry?->image ?: '/media/headers/contact.jpg'"
 >
-    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Contact Us', 'image' => $entry?->image])
-    <div class="wrapper contact-layout">
+    @include('site.partials.page-header', ['heading' => $entry?->title ?: 'Contact Us', 'image' => $entry?->image ?: '/media/headers/contact.jpg', 'subtitle' => 'We welcome your questions, messages, and connections.'])
+    <div class="wrapper contact-layout" data-reveal>
         @if(filled($entry?->body))
             <div class="prose contact-info">{!! $entry->body !!}</div>
         @endif

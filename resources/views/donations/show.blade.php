@@ -1,19 +1,14 @@
-<x-site-layout title="Support Nasenyi" description="Make a donation to support the Nasenyi Abayudaya Jewish Community.">
-    <section class="page-hero">
-        <div class="wrapper page-hero-inner">
-            <h1>Support Nasenyi</h1>
-            <p>Help sustain Jewish life, learning, and community care in Nasenyi.</p>
-        </div>
-    </section>
+<x-site-layout title="Support Nasenyi" description="Make a donation to support the Nasenyi Abayudaya Jewish Community." image="/media/headers/donation.jpg">
+    @include('site.partials.page-header', ['heading' => 'Support Nasenyi', 'image' => '/media/headers/donation.jpg', 'subtitle' => 'Help sustain Jewish life, learning, and community care in Nasenyi.'])
 
-    <section class="wrapper contact-layout" aria-label="Make a donation">
+    <section class="wrapper contact-layout" aria-label="Make a donation" data-reveal>
         <div class="prose">
             <h2>Give to the community</h2>
             <p>Your contribution supports the Nasenyi Abayudaya Jewish Community. Give where it is needed most or select a cause below.</p>
 
             @if($causes->isNotEmpty())
                 <h3>Donation causes</h3>
-                <ul>
+                <ul class="cause-list">
                     @foreach($causes as $cause)
                         <li>
                             <strong>{{ $cause->title }}</strong>
@@ -33,7 +28,7 @@
                 @csrf
                 <input type="hidden" name="reference" value="{{ old('reference', $reference) }}">
                 <h2>Make a donation</h2>
-                <p>Continue to Pesapal to complete your payment.</p>
+                <p class="form-intro">Continue to Pesapal to complete your payment securely.</p>
 
                 @if($errors->any())
                     <div class="form-error" role="alert">
@@ -65,7 +60,7 @@
                         </select>
                     </label>
                     <label class="field">Amount
-                        <input type="text" name="amount" inputmode="decimal" maxlength="12" value="{{ old('amount') }}" required>
+                        <input type="text" name="amount" inputmode="decimal" maxlength="12" placeholder="Amount" value="{{ old('amount') }}" required>
                     </label>
                 </div>
 
@@ -79,11 +74,12 @@
                     <input type="tel" name="donor_phone" autocomplete="tel" maxlength="24" value="{{ old('donor_phone') }}">
                 </label>
 
-                <button class="button button-gold" type="submit">Continue to Pesapal <span aria-hidden="true">↗</span></button>
+                <button class="button button-gold" type="submit">Continue to Pesapal <span aria-hidden="true">→</span></button>
             </form>
         @else
             <div class="contact-form">
                 <h2>Online donations are temporarily unavailable</h2>
+                <p>Please contact the community and we will be glad to help you give.</p>
                 <a class="button button-gold" href="{{ route('site.contact') }}">Contact us</a>
             </div>
         @endif

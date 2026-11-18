@@ -1,12 +1,8 @@
-<x-site-layout title="Donation status" :noindex="true">
-    <section class="page-hero">
-        <div class="wrapper page-hero-inner">
-            <h1>Donation status</h1>
-        </div>
-    </section>
+<x-site-layout title="Donation status" image="/media/headers/donation.jpg" :noindex="true">
+    @include('site.partials.page-header', ['heading' => 'Donation status', 'image' => '/media/headers/donation.jpg'])
 
-    <section class="wrapper contact-layout" aria-label="Donation details">
-        <div class="contact-form">
+    <section class="wrapper contact-layout" aria-label="Donation details" data-reveal>
+        <div class="contact-form status-card status-{{ $donation->status }}">
             <h2>{{ match($donation->status) {
                 'completed' => 'Payment confirmed',
                 'failed' => 'Payment failed',
@@ -36,18 +32,16 @@
                     @endif
             @endswitch
 
-            <dl>
-                <dt><strong>Amount</strong></dt>
-                <dd>{{ $donation->currency }} {{ $donation->amount() }}</dd>
-                <dt><strong>Reference</strong></dt>
-                <dd class="break-all">{{ $donation->reference }}</dd>
+            <dl class="donation-meta">
+                <div><dt>Amount</dt><dd>{{ $donation->currency }} {{ $donation->amount() }}</dd></div>
+                <div><dt>Reference</dt><dd class="break-all">{{ $donation->reference }}</dd></div>
             </dl>
 
             <a class="button button-gold" href="{{ route('donations.show') }}">Back to donations</a>
         </div>
         <div class="prose">
             <h2>Need help?</h2>
-            <p><a href="{{ route('site.contact') }}">Contact the community</a> with your donation reference.</p>
+            <p><a href="{{ route('site.contact') }}">Contact the community</a> with your donation reference and we will assist you.</p>
         </div>
     </section>
 </x-site-layout>
