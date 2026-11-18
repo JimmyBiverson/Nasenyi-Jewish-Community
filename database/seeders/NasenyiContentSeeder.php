@@ -52,8 +52,8 @@ class NasenyiContentSeeder extends Seeder
             'facebook_url' => 'https://www.facebook.com/share/1c2QFYPeMR/?mibextid=wwXIfr',
             'youtube_url' => 'https://www.youtube.com/@NasenyiJews-Makor-Chayim',
             'instagram_url' => 'https://www.instagram.com/nasenyijewishcommunity',
-            'logo' => '/media/community/logo.jpeg',
-            'social_image' => '/media/community/dji-0909.jpg',
+            'logo' => '/media/brand/icon-192.png',
+            'social_image' => '/media/headers/about.jpg',
         ];
     }
 }
