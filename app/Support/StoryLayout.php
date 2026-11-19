@@ -198,7 +198,7 @@ class StoryLayout
     {
         $result = [];
 
-        foreach ($element->children as $child) {
+        for ($child = $element->firstElementChild; $child !== null; $child = $child->nextElementSibling) {
             if ($child->classList->contains($class)) {
                 $result[] = $child;
             }
