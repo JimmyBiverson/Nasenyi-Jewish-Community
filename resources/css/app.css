@@ -298,6 +298,7 @@ main::before {
 .search-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
 .header-donate { white-space: nowrap; padding-inline: 1rem; min-height: 42px; }
+.mobile-donate.button { display: none; }
 
 /* Buttons */
 .button {
@@ -371,11 +372,11 @@ main::before {
 }
 .hero-photo { object-position: var(--slide-position, 50% 50%); }
 .hero-slide--contain .hero-photo { object-fit: contain; }
-.hero-slide:not(.hero-slide--contain):is(.is-active, .is-leaving) .hero-photo {
+.hero-slide:is(.is-active, .is-leaving) .hero-photo {
     animation: hero-camera calc(var(--hero-cycle, 7500ms) + 1100ms) cubic-bezier(.32, .08, .71, .94) both paused;
     transform-origin: var(--slide-position, 50% 50%);
 }
-[data-hero-running] .hero-slide:not(.hero-slide--contain):is(.is-active, .is-leaving) .hero-photo { animation-play-state: running; }
+:is([data-hero-running], [data-hero]:not(:has([data-hero-controls]))) .hero-slide:is(.is-active, .is-leaving) .hero-photo { animation-play-state: running; }
 .hero-slide.is-active .hero-content > * { animation: hero-copy .68s var(--ease) both; }
 .hero-slide.is-active .hero-content > p { animation-delay: .1s; }
 .hero-slide.is-active .hero-content > .hero-actions { animation-delay: .19s; }
@@ -916,6 +917,8 @@ main::before {
     .header-inner { flex-wrap: wrap; min-height: var(--header-h); gap: 0 .85rem; }
     .header-inner > .site-brand, .menu-button { min-height: var(--header-h); }
     .menu-button:not([hidden]) { display: inline-flex; margin-inline-start: auto; }
+    .header-inner:has([data-enhanced]) .mobile-donate.button { display: inline-flex; margin-inline-start: auto; min-height: 40px; }
+    .header-inner:has([data-enhanced]) .menu-button:not([hidden]) { margin-inline-start: 0; }
     .navigation-panel { width: 100%; }
     .navigation-panel[data-enhanced] {
         display: grid;
@@ -923,9 +926,10 @@ main::before {
         opacity: 0;
         overflow: hidden;
         pointer-events: none;
-        transition: grid-template-rows .38s var(--ease), opacity .28s ease;
+        transform: translateY(-.35rem);
+        transition: grid-template-rows .42s var(--ease), opacity .3s var(--ease), transform .42s var(--ease);
     }
-    .navigation-panel[data-open] { grid-template-rows: 1fr; opacity: 1; pointer-events: auto; }
+    .navigation-panel[data-open] { grid-template-rows: 1fr; opacity: 1; transform: translateY(0); pointer-events: auto; }
     .navigation-clip { min-height: 0; overflow: hidden; }
     .primary-nav {
         width: 100%;
@@ -1205,6 +1209,60 @@ main::before {
 .story-photo-copy { min-width: 0; }
 .story-photo-copy > :first-child { margin-top: 0; }
 .story-photo-copy > :last-child { margin-bottom: 0; }
+
+.home-story > :is(.story-layout--opening, .story-layout--faith, .pillars-group),
+.story-body > :is(.story-layout--spread, .story-layout--illustrated, .story-layout--bilingual) {
+    border: 1px solid #d9e6ed;
+    border-radius: clamp(1.15rem, 3vw, 2rem);
+    background-image:
+        radial-gradient(ellipse at 96% 10%, #cce2edb5, transparent 44%),
+        radial-gradient(ellipse at 0% 100%, #f5dbae97, transparent 42%),
+        linear-gradient(135deg, #f8fbfd, #f0f5f7);
+}
+.home-story > :is(.story-layout--opening, .story-layout--faith, .pillars-group) {
+    padding: clamp(1.25rem, 4.5vw, 4.25rem);
+}
+.home-story > :is(.story-layout--faith, .story-layout--profile), .giving-panel {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+}
+.home-story > :is(.story-layout--faith, .story-layout--profile)::before, .giving-panel::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -1.5rem;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #d09a43b0 1px, transparent 1.9px), radial-gradient(circle, #7298b890 1px, transparent 2px);
+    background-size: 2.8rem 2.8rem, 4.3rem 4.3rem;
+    mask-image: linear-gradient(114deg, transparent 38%, #000c 100%);
+    opacity: .5;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .home-story > :is(.story-layout--faith, .story-layout--profile)::before, .giving-panel::before {
+        animation: section-particles 22s ease-in-out infinite alternate;
+    }
+}
+@keyframes section-particles {
+    to { transform: translate3d(1.2rem, -.9rem, 0); }
+}
+
+@media (min-width: 701px) {
+    .story-photo-spread { align-items: stretch; }
+    .story-photo-spread > figure,
+    .story-layout--spread .story-column > figure { display: flex; flex-direction: column; }
+    .story-photo-spread > figure > :is(a, picture),
+    .story-layout--spread .story-column > figure > :is(a, picture) { display: flex; flex: 1; }
+    .story-photo-spread > figure img,
+    .story-layout--spread .story-column > figure img {
+        flex: 1;
+        height: 100%;
+        min-height: 18rem;
+        max-height: clamp(28rem, 65vw, 48rem);
+        object-fit: cover;
+        object-position: center;
+    }
+}
 .story-body > .story-section:has(> .story-gallery) { max-width: 100%; }
 .story-body > .story-section:has(> .story-gallery) > :is(h2, h3, p, ul, blockquote) {
     max-width: 69ch;
