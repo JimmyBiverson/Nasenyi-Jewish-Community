@@ -33,6 +33,7 @@
                 <img src="{{ $logo }}" alt="" width="52" height="52" decoding="async">
                 <span><strong>Nasenyi</strong><small>Abayudaya Community</small></span>
             </a>
+            <a class="button button-gold mobile-donate" href="{{ route('donations.show') }}">Donate</a>
             <button class="menu-button" type="button" aria-controls="main-navigation" aria-expanded="false" data-menu-toggle hidden>
                 <span class="menu-icon" aria-hidden="true"></span> Menu
             </button>
