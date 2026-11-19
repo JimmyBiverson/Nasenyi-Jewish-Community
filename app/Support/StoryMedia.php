@@ -36,7 +36,7 @@ class StoryMedia
     {
         $body = (string) $entry->body;
         $overrides = $entry->body_image_overrides;
-        if ($body === '' || blank($overrides)) {
+        if ($body === '' || blank($overrides) || ! class_exists(HTMLDocument::class)) {
             return $body;
         }
 
