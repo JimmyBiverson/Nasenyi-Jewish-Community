@@ -21,7 +21,7 @@ class StoryLayout
     {
         $body = StoryMedia::render($entry);
 
-        if (! str_contains($body, 'story-section')) {
+        if (! class_exists(HTMLDocument::class) || ! str_contains($body, 'story-section')) {
             return $body;
         }
 
