@@ -36,6 +36,9 @@ class StoryLayout
             if ($layout !== null) {
                 $section->classList->add('story-layout--'.$layout);
             }
+            if ($layout === 'faith') {
+                self::addFaithVideo($document, $section);
+            }
             if ($layout === 'illustrated') {
                 self::makePhotoSpread($document, $section->firstElementChild);
             }
@@ -104,6 +107,50 @@ class StoryLayout
         }
 
         return null;
+    }
+
+    private static function addFaithVideo(HTMLDocument $document, Element $section): void
+    {
+        if ($section->querySelector('iframe')) {
+            return;
+        }
+
+        $link = $section->querySelector('a[href*="youtube.com/watch"], a[href*="youtu.be/"]');
+        $paragraph = $link?->closest('p');
+        $url = parse_url($link?->getAttribute('href') ?? '');
+
+        if ($link === null || $paragraph === null || ! is_array($url)) {
+            return;
+        }
+
+        $host = strtolower($url['host'] ?? '');
+        $videoId = null;
+
+        if (in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com'], true)) {
+            parse_str($url['query'] ?? '', $query);
+            $videoId = $query['v'] ?? null;
+        } elseif (in_array($host, ['youtu.be', 'www.youtu.be'], true)) {
+            $videoId = ltrim($url['path'] ?? '', '/');
+        }
+
+        if (! is_string($videoId) || ! preg_match('/^[A-Za-z0-9_-]{11}$/', $videoId)) {
+            return;
+        }
+
+        $video = $document->createElement('div');
+        $video->className = 'story-video';
+        $frame = $document->createElement('iframe');
+        $frame->setAttribute(
+            'src',
+            "https://www.youtube.com/embed/{$videoId}?autoplay=1&mute=1&loop=1&playlist={$videoId}&controls=1&playsinline=1&rel=0",
+        );
+        $frame->setAttribute('title', 'The 8 Kilometers of Faith video');
+        $frame->setAttribute('loading', 'lazy');
+        $frame->setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+        $frame->setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        $frame->setAttribute('allowfullscreen', 'allowfullscreen');
+        $video->append($frame);
+        $paragraph->after($video);
     }
 
     private static function makePhotoSpread(HTMLDocument $document, Element $figure): void

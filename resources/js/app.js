@@ -65,6 +65,49 @@ const updateScrollUi = () => {
 updateScrollUi();
 window.addEventListener('scroll', () => { scrollFrame ??= requestAnimationFrame(updateScrollUi); }, { passive: true });
 
+if (!motionPreference.matches && 'IntersectionObserver' in window) {
+    const countUp = new IntersectionObserver((entries, observation) => {
+        for (const { target, isIntersecting } of entries) {
+            if (!isIntersecting) continue;
+
+            observation.unobserve(target);
+            const original = target.textContent.trim();
+            const match = original.match(/^(\D*)([\d,]+(?:\.\d+)?)(\D*)$/);
+            if (!match) continue;
+
+            const [, prefix, rawNumber, suffix] = match;
+            const value = Number(rawNumber.replaceAll(',', ''));
+            if (!Number.isFinite(value)) continue;
+
+            const decimals = (rawNumber.split('.')[1] || '').length;
+            const formatter = new Intl.NumberFormat(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals,
+            });
+            const start = performance.now();
+
+            const update = timestamp => {
+                const progress = Math.min((timestamp - start) / 1400, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                target.textContent = `${prefix}${formatter.format(value * eased)}${suffix}`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    target.textContent = original;
+                }
+            };
+
+            target.textContent = `${prefix}0${suffix}`;
+            requestAnimationFrame(update);
+        }
+    }, { threshold: 0.35 });
+
+    for (const counter of document.querySelectorAll('.home-story .story-layout--opening .story-stat strong')) {
+        countUp.observe(counter);
+    }
+}
+
 for (const hero of document.querySelectorAll('[data-hero]')) {
     const slides = [...hero.querySelectorAll('[data-slide]')];
     const dots = [...hero.querySelectorAll('[data-slide-to]')];
@@ -145,7 +188,8 @@ if (!motionPreference.matches && 'IntersectionObserver' in window) {
         ['.story-columns > .story-column:has(> figure):not(:has(> .story-columns)), .story-photo-spread > figure', 'left'],
         ['.story-columns > .story-column:not(:has(> figure, > .story-columns, > .story-card)), .story-photo-copy', 'right'],
         ['.section-heading > h2, .story-layout--topics > .story-columns > .story-column > h2, .story-layout--leadership h2', 'down'],
-        ['.story-gallery figure, .gallery-grid figure, .pillars-group .story-card', 'zoom'],
+        ['.story-columns > .story-column', 'up'],
+        ['.story-gallery figure, .gallery-grid figure, .story-grid > .story-card, .story-layout--topics .story-card, .story-layout--leadership .story-card, .pillars-group .story-card', 'zoom'],
         ['[data-reveal], .story-section > :is(h2, h3, figure), .event-list li, .contact-layout > *', 'up'],
     ];
     const targets = new Map();

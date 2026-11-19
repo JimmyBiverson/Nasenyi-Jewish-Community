@@ -27,7 +27,7 @@ class PublicWebsiteTest extends TestCase
     {
         $this->seed(NasenyiContentSeeder::class);
 
-        $this->get('/')->assertOk()->assertSeeInOrder([
+        $home = $this->get('/')->assertOk()->assertSeeInOrder([
             'Nasenyi Jewish Community – Makor Chayim, Uganda',
             'A Future Built Together',
             'About Nasenyi',
@@ -40,6 +40,13 @@ class PublicWebsiteTest extends TestCase
             'The Legacy of Leadership',
             'Latest Community Updates',
         ]);
+        $home->assertSee('youtube.com/embed/2_PEQmt7pGM', false)
+            ->assertSee('autoplay=1', false)
+            ->assertSee('mute=1', false)
+            ->assertSee('Watch video')
+            ->assertSee('Years of Jewish Presence')
+            ->assertSee('3.5+');
+
         $this->get('/about-us/')->assertOk()
             ->assertSeeInOrder(['1919', 'Mishael Birogi', 'Jacob Mwosuko', 'Donation of Land for the Nasenyi Synagogue'])
             ->assertSee('/media/community/land-dji-0911.jpeg')
