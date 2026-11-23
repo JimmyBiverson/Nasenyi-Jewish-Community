@@ -51,15 +51,36 @@ class PublicWebsiteTest extends TestCase
             ->assertSeeInOrder(['1919', 'Mishael Birogi', 'Jacob Mwosuko', 'Donation of Land for the Nasenyi Synagogue'])
             ->assertSee('/media/community/land-dji-0911.jpeg')
             ->assertSee('/media/community/land-kqm5505.jpeg')
-            ->assertSee('giving-heading')
+            ->assertSee('id="pinned-cta-support"', false)
             ->assertSee(route('donations.show'));
-        $this->get('/donation/')->assertOk()->assertDontSee('giving-heading');
+        $this->get('/donation/')->assertOk()->assertDontSee('id="pinned-cta-support"', false);
         $this->get('/updates/')->assertOk()->assertSeeInOrder(['Nasenyi Latest Updates', 'David and Itai teaching']);
         $this->get('/checkout-2/')->assertOk()->assertSee('Heritage');
         $this->get('/my-account/')->assertOk()->assertSee('The 8 Kilometers of Faith');
         $this->get('/site/about-us/')->assertMovedPermanently()->assertRedirect(url('about-us').'/');
         $this->get('/product/donation-to-nasenyi-jewish-community')->assertMovedPermanently()->assertRedirect(url('donation').'/');
         $this->get('/probiv-test-post/')->assertNotFound();
+    }
+
+    public function test_pinned_cta_sections_render_on_public_pages(): void
+    {
+        $this->seed(NasenyiContentSeeder::class);
+
+        $home = $this->get('/')->assertOk()
+            ->assertSee('id="pinned-cta-visit"', false)
+            ->assertSee('id="pinned-cta-support"', false)
+            ->assertSee('Come encounter Nasenyi')
+            ->assertSee('Support the Nasenyi Jewish Community');
+
+        $this->assertSame(1, substr_count($home->getContent(), 'id="pinned-cta-visit"'));
+        $this->assertSame(1, substr_count($home->getContent(), 'id="pinned-cta-support"'));
+
+        $this->get('/about-us/')->assertOk()
+            ->assertSee('id="pinned-cta-support"', false)
+            ->assertDontSee('id="pinned-cta-visit"', false);
+
+        $this->get('/donation/')->assertOk()
+            ->assertDontSee('id="pinned-cta-support"', false);
     }
 
     public function test_public_images_use_shared_blog_frames_and_keep_uploaded_banner_paths(): void
