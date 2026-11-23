@@ -1,3 +1,7 @@
+import Lenis from 'lenis';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
 const menuToggle = document.querySelector('[data-menu-toggle]');
 const navigation = document.querySelector('#main-navigation');
 const menuPanel = document.querySelector('[data-menu-panel]');
@@ -16,6 +20,7 @@ if (menuToggle && navigation && menuPanel) {
     };
 
     menuPanel.setAttribute('data-enhanced', '');
+    menuPanel.setAttribute('data-lenis-prevent', '');
     setMenu(false);
     menuToggle.hidden = false;
     menuToggle.addEventListener('click', () => setMenu(!isOpen()));
@@ -313,4 +318,166 @@ if (lightbox && typeof lightbox.showModal === 'function') {
     lightbox.addEventListener('click', event => {
         if (event.target === lightbox) lightbox.close();
     });
+}
+
+const pinnedSections = [...document.querySelectorAll('[data-pinned-cta]')];
+let lenis = null;
+let lenisRaf = null;
+let matchMediaContext = null;
+let scrollLocked = false;
+let scrollReady = false;
+
+const syncScrollLock = () => {
+    if (!lenis) return;
+    const locked = document.body.classList.contains('nav-open') || document.querySelectorAll('dialog[open]').length > 0;
+    if (locked === scrollLocked) return;
+    scrollLocked = locked;
+    if (locked) lenis.stop();
+    else lenis.start();
+};
+
+if (typeof HTMLDialogElement !== 'undefined') {
+    const nativeShowModal = HTMLDialogElement.prototype.showModal;
+    const nativeClose = HTMLDialogElement.prototype.close;
+    HTMLDialogElement.prototype.showModal = function (...args) {
+        const result = nativeShowModal.apply(this, args);
+        syncScrollLock();
+        return result;
+    };
+    HTMLDialogElement.prototype.close = function (...args) {
+        const result = nativeClose.apply(this, args);
+        syncScrollLock();
+        return result;
+    };
+}
+
+new MutationObserver(syncScrollLock).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+document.addEventListener('close', syncScrollLock, true);
+
+document.addEventListener('click', event => {
+    if (!lenis || event.defaultPrevented || event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const link = event.target.closest('a[href^="#"]');
+    if (!link || link.hash.length <= 1) return;
+    let id;
+    try {
+        id = decodeURIComponent(link.hash.slice(1));
+    } catch {
+        return;
+    }
+    const target = document.getElementById(id);
+    if (!target) return;
+    event.preventDefault();
+    const offset = header ? -header.getBoundingClientRect().height : 0;
+    lenis.scrollTo(target, { offset, duration: 1.15 });
+    history.pushState(null, '', link.hash);
+});
+
+const clearPinnedStyles = () => {
+    for (const section of pinnedSections) {
+        gsap.set(section.querySelectorAll('[data-pinned-cta-media], [data-pinned-cta-ring], [data-pinned-cta-content]'), { clearProps: 'all' });
+    }
+};
+
+const destroySmoothScroll = () => {
+    if (matchMediaContext) {
+        matchMediaContext.revert();
+        matchMediaContext = null;
+    }
+    if (lenisRaf) {
+        gsap.ticker.remove(lenisRaf);
+        lenisRaf = null;
+    }
+    if (lenis) {
+        lenis.destroy();
+        lenis = null;
+    }
+    window.__lenis = null;
+    scrollLocked = false;
+    scrollReady = false;
+    document.documentElement.classList.remove('has-anim');
+    clearPinnedStyles();
+};
+
+const initializeSmoothScroll = () => {
+    if (scrollReady || motionPreference.matches) return;
+    gsap.registerPlugin(ScrollTrigger);
+    scrollReady = true;
+    document.documentElement.classList.add('has-anim');
+    try {
+        lenis = new Lenis({
+            duration: 1.15,
+            easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            smoothWheel: true,
+            syncTouch: false,
+            wheelMultiplier: 1,
+            touchMultiplier: 1.6,
+            autoResize: true,
+        });
+        lenis.on('scroll', ScrollTrigger.update);
+        lenisRaf = time => lenis.raf(time * 1000);
+        gsap.ticker.add(lenisRaf);
+        gsap.ticker.lagSmoothing(0);
+        window.__lenis = lenis;
+        document.dispatchEvent(new CustomEvent('site:lenis', { detail: lenis }));
+
+        matchMediaContext = gsap.matchMedia();
+        matchMediaContext.add('(min-width: 1024px)', () => {
+            const cleanups = [];
+            for (const section of pinnedSections) {
+                const media = section.querySelector('[data-pinned-cta-media]');
+                const ring = section.querySelector('[data-pinned-cta-ring]');
+                const content = section.querySelector('[data-pinned-cta-content]');
+                if (!media || !content) continue;
+
+                const timeline = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: section,
+                        pin: true,
+                        start: 'top top',
+                        end: '+=200%',
+                        scrub: 1,
+                        anticipatePin: 1,
+                    },
+                });
+                timeline.fromTo(media,
+                    { clipPath: 'circle(84px at 50% 50%)', scale: 1.18 },
+                    { clipPath: 'circle(120% at 50% 50%)', scale: 1, duration: 2, ease: 'power2.in' }, 0);
+                if (ring) {
+                    timeline.fromTo(ring,
+                        { scale: 2, autoAlpha: 1 },
+                        { scale: 420, duration: 2, ease: 'power2.in', autoAlpha: 0 }, 0);
+                }
+                timeline.to(content, { autoAlpha: 1, scale: 1, duration: 1, ease: 'power2.out' }, '-=1');
+                cleanups.push(() => {
+                    timeline.scrollTrigger?.kill();
+                    timeline.kill();
+                });
+            }
+            ScrollTrigger.refresh();
+            return () => cleanups.forEach(cleanup => cleanup());
+        });
+
+        const refresh = () => ScrollTrigger.refresh();
+        window.addEventListener('load', refresh, { once: true });
+        for (const image of document.querySelectorAll('[data-pinned-cta] img')) {
+            if (image.complete) continue;
+            image.addEventListener('load', refresh, { once: true });
+            image.addEventListener('error', refresh, { once: true });
+        }
+        syncScrollLock();
+    } catch (error) {
+        destroySmoothScroll();
+        console.error('[nasenyi motion]', error);
+    }
+};
+
+motionPreference.addEventListener('change', () => {
+    if (motionPreference.matches) destroySmoothScroll();
+    else initializeSmoothScroll();
+});
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSmoothScroll, { once: true });
+} else {
+    initializeSmoothScroll();
 }
