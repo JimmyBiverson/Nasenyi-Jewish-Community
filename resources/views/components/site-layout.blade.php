@@ -749,12 +749,16 @@
             @endif
         @endif
         @unless(request()->routeIs('donations.*'))
-            <section class="wrapper giving-section" aria-labelledby="giving-heading">
-                <div class="giving-panel" data-reveal="up">
-                    <h2 id="giving-heading">Support the Nasenyi Jewish Community</h2>
-                    <a class="button button-gold" href="{{ route('donations.show') }}">Donate <span aria-hidden="true">→</span></a>
-                </div>
-            </section>
+            <x-pinned-cta
+                id="pinned-cta-support"
+                eyebrow="Keep the story going"
+                title="Support the Nasenyi Jewish Community"
+                body="Your gift protects our heritage, sustains our gatherings, and shares Nasenyi's story with the world."
+                :href="route('donations.show')"
+                label="Donate"
+                image="/media/headers/donation.webp"
+                tone="royal"
+            />
         @endunless
     </main>
     <footer class="site-footer">

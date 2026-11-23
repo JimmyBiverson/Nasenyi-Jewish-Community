@@ -62,6 +62,16 @@
     @if($entry)
         <div class="home-story prose wrapper">{!! \App\Support\StoryLayout::render($entry) !!}</div>
     @endif
+    <x-pinned-cta
+        id="pinned-cta-visit"
+        eyebrow="From Mbale to the world"
+        title="Come encounter Nasenyi"
+        body="Walk the hills, share a meal, and hear the stories that carried a community across a century."
+        :href="route('site.contact')"
+        label="Plan a visit"
+        image="/media/headers/community.webp"
+        tone="amber"
+    />
     @if($latestPosts->isNotEmpty())
         <section class="wrapper latest-section" aria-labelledby="latest-heading">
             <div class="section-heading">
