@@ -19,7 +19,7 @@
                 @endif
                 <div class="field">
                     <label for="image-upload">{{ $record->exists ? 'Replace image' : 'Image' }}</label>
-                    <input id="image-upload" name="image_upload" type="file" accept="image/jpeg,image/png,image/webp,image/avif" @required(! $record->exists)>
+                    <input id="image-upload" name="image_upload" type="file" accept="{{ \App\Support\ImageUpload::accept() }}" @required(! $record->exists)>
                 </div>
                 <div class="field">
                     <label for="alt-text">Alternative text</label>

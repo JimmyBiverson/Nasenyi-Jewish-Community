@@ -16,10 +16,13 @@
 /database/*.sqlite*
 /node_modules
 /public/build
+/public/error_log
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
 /storage/*.key
+/storage/app/public/content/
+/storage/app/public/gallery/
 /storage/pail
 /vendor
 _ide_helper.php

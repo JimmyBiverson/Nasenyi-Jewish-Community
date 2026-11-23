@@ -1,7 +1,7 @@
 <x-site-layout
     :title="$entry?->seo_title ?: ($entry?->title ?: 'Nasenyi Abayudaya Community')"
     :description="$entry?->seo_description ?: $entry?->summary"
-    :image="$entry?->social_image ?: $entry?->image"
+    :image="(\App\Support\SiteBranding::settings()['social_image'] ?? null) ?: ($entry?->social_image ?: $entry?->image)"
     :canonical="route('site.home')"
 >
     @if($entry && count($entry->hero_slides ?? []))
@@ -21,6 +21,7 @@
                                 <source media="(max-width: 720px)" srcset="{{ $banner['narrow'] }}">
                             @endif
                             <img class="hero-photo" src="{{ $banner['source'] }}" alt="" decoding="async"
+                                loading="{{ $loop->first ? 'eager' : 'lazy' }}"
                                 fetchpriority="{{ $loop->first ? 'high' : 'low' }}">
                         </picture>
                         <div class="hero-overlay" aria-hidden="true"></div>

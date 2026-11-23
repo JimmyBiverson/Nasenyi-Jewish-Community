@@ -11,7 +11,7 @@ class StoryMedia
     /** @return array<string, array{source: string, alt: string, section: string}> */
     public static function list(string $body): array
     {
-        if ($body === '') {
+        if ($body === '' || ! class_exists(HTMLDocument::class)) {
             return [];
         }
 

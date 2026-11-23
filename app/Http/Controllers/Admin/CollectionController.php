@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CommunityEvent;
 use App\Models\DonationCause;
 use App\Models\GalleryImage;
+use App\Support\ImageUpload;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -110,14 +111,16 @@ class CollectionController extends Controller
 
         if ($collection === 'gallery') {
             $data = $request->validate($rules + [
-                'image_upload' => [$record->exists ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:8192'],
+                'image_upload' => ImageUpload::rules('image_upload', required: ! $record->exists),
                 'alt_text' => ['required', 'string', 'max:255'],
                 'caption' => ['nullable', 'string', 'max:1000'],
                 'sort_order' => ['required', 'integer', 'min:0', 'max:99999'],
             ]);
 
+            $previousImage = $record->path;
+
             if ($request->hasFile('image_upload')) {
-                $path = $request->file('image_upload')->store('gallery', 'public');
+                $path = ImageUpload::store($request->file('image_upload'), 'gallery');
                 if ($path === false) {
                     throw ValidationException::withMessages(['image_upload' => 'The image could not be saved.']);
                 }
@@ -151,5 +154,9 @@ class CollectionController extends Controller
         }
 
         $record->fill($data)->save();
+
+        if ($collection === 'gallery' && $previousImage && $previousImage !== $record->path) {
+            ImageUpload::delete($previousImage);
+        }
     }
 }

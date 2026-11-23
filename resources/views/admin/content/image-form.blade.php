@@ -31,8 +31,8 @@
         </div>
         <div class="field">
             <label for="{{ $anchor }}-file">Upload a replacement</label>
-            <input id="{{ $anchor }}-file" name="image_upload" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
-            <small>JPEG, PNG, WebP or AVIF. Maximum {{ \Illuminate\Support\Number::fileSize(\App\Support\StoryMedia::uploadLimit() * 1024, precision: 1) }}.</small>
+            <input id="{{ $anchor }}-file" name="image_upload" type="file" accept="{{ \App\Support\ImageUpload::accept() }}">
+            <small>JPEG, PNG, WebP or AVIF. Maximum {{ number_format(\App\Support\StoryMedia::uploadLimit()) }} KB.</small>
         </div>
         @if($showFocalPoint)
             <div class="form-grid media-focal-point">

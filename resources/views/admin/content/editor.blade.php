@@ -5,10 +5,30 @@
         const input = document.getElementById('body');
         const source = document.getElementById('editor-source');
         const toggle = document.getElementById('toggle-source');
+        const title = document.getElementById('title');
+        const slug = document.getElementById('slug');
+        const searchTitle = document.getElementById('seo-title');
+        const searchDescription = document.getElementById('seo-description');
+        const summary = document.getElementById('summary');
+        const baseUrl = {{ Illuminate\Support\Js::from(url('/')) }};
+        const updatePreview = () => {
+            const heading = searchTitle.value.trim() || title.value.trim();
+            const description = searchDescription.value.trim() || summary.value.trim();
+            document.getElementById('seo-preview-title').textContent = heading;
+            document.getElementById('seo-preview-address').textContent = baseUrl + '/' + slug.value.trim();
+            document.getElementById('seo-preview-description').textContent = description;
+            document.getElementById('seo-preview-length').textContent = `Title: ${heading.length} characters. Description: ${description.length} characters.`;
+        };
+        [title, slug, searchTitle, searchDescription, summary].forEach(field => field.addEventListener('input', updatePreview));
+        updatePreview();
         let previousSource = input.value;
-        wrapper.hidden = false;
-        source.hidden = true;
-        editor.innerHTML = input.value;
+        if (@json($editorHtml)) {
+            wrapper.hidden = false;
+            source.hidden = true;
+            editor.innerHTML = input.value;
+        } else {
+            input.readOnly = true;
+        }
 
         editor.addEventListener('input', () => { input.value = editor.innerHTML; });
         editor.addEventListener('paste', event => {

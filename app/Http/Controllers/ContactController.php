@@ -38,15 +38,19 @@ class ContactController extends Controller
         ]);
 
         $recipient = SiteSetting::where('key', 'contact_email')->value('value');
+        $delivered = false;
 
         if (filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
             try {
                 Mail::to($recipient)->send(new ContactFormMessage($message));
+                $delivered = ! in_array(config('mail.default'), ['log', 'array'], true);
             } catch (Throwable $exception) {
                 report($exception);
             }
         }
 
-        return to_route('site.contact')->with('contact_status', 'Thank you. Your message has been sent to the community.');
+        return to_route('site.contact')->with('contact_status', $delivered
+            ? 'Thank you. Your message has been sent to the community.'
+            : 'Thank you. Your message was saved in the community inbox.');
     }
 }

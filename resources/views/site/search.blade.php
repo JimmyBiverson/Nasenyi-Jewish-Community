@@ -8,9 +8,11 @@
         @if($matches)
             <p class="search-summary">{{ $matches->total() }} {{ \Illuminate\Support\Str::plural('result', $matches->total()) }} for “{{ $term }}”</p>
             <div class="story-grid">
-                @foreach($matches as $post)
+                @forelse($matches as $post)
                     @include('site.partials.post-card')
-                @endforeach
+                @empty
+                    <p>Try a shorter term or a different spelling.</p>
+                @endforelse
             </div>
             {{ $matches->links() }}
         @endif

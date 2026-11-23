@@ -50,6 +50,7 @@ Route::prefix('admin')->group(function (): void {
             Route::delete('inbox/{message}', [InboxController::class, 'destroy'])->name('inbox.destroy');
             Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
             Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');
+            Route::post('settings/pesapal', [SettingsController::class, 'payments'])->middleware('throttle:6,1')->name('settings.payments');
             Route::resource('users', UserController::class)->except('show');
         });
     });

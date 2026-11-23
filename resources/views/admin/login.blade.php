@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>Sign in · Nasenyi Administration</title>
-    <link rel="icon" href="{{ \App\Support\SiteBranding::image('logo') }}">
+    @php($favicon = \App\Support\SiteBranding::image('favicon'))
+    <link rel="icon" href="{{ $favicon }}" type="{{ \App\Support\ImageUpload::mime($favicon) }}">
     @include('admin.styles')
 </head>
 <body class="login-wrap">

@@ -4,7 +4,9 @@ namespace App\View\Components;
 
 use App\Models\ContentEntry;
 use App\Support\ContentHtml;
+use App\Support\ImageUpload;
 use App\Support\SiteBranding;
+use App\Support\SocialImage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\View\Component;
@@ -26,6 +28,7 @@ class SiteLayout extends Component
         $siteName = $settings['site_name'] ?? 'Nasenyi Abayudaya Community';
         $logo = SiteBranding::image('logo');
         $favicon = SiteBranding::image('favicon');
+        $faviconType = ImageUpload::mime($favicon);
         $blogImageRatio = $settings['blog_image_ratio'] ?? '3:2';
         $blogImageRatio = in_array($blogImageRatio, ['3:2', '16:9', '4:3', '1:1'], true) ? $blogImageRatio : '3:2';
         $blogImageFit = ($settings['blog_image_fit'] ?? null) === 'contain' ? 'contain' : 'cover';
@@ -48,10 +51,12 @@ class SiteLayout extends Component
             'Instagram' => $settings['instagram_url'] ?? null,
             'YouTube' => $settings['youtube_url'] ?? null,
         ])->filter(fn ($link): bool => is_string($link) && ContentHtml::safeUrl($link));
-        $socialImage = $this->image && ContentHtml::safeUrl($this->image)
-            ? $this->image
-            : SiteBranding::image('social_image');
+        $social = SocialImage::make($this->image, $siteName);
+        $socialImage = $social['url'];
         $canonicalUrl = $this->canonical ?: (request()->path() === '/' ? url('/') : url(request()->path()).'/');
+        $brandParts = preg_split('/\s+/', trim($siteName), 2) ?: [$siteName];
+        $brandPrimary = $brandParts[0];
+        $brandSecondary = $brandParts[1] ?? '';
         $siteTitle = Str::contains($this->title, $siteName, ignoreCase: true)
             ? $this->title
             : $this->title.' | '.$siteName;
@@ -65,8 +70,8 @@ class SiteLayout extends Component
         ];
 
         return view('components.site-layout', compact(
-            'settings', 'siteName', 'logo', 'favicon', 'communityLinks', 'available', 'socialLinks', 'socialImage', 'canonicalUrl',
-            'siteTitle', 'organization', 'blogImageRatio', 'blogImageFit',
+            'settings', 'siteName', 'logo', 'favicon', 'faviconType', 'communityLinks', 'available', 'socialLinks', 'socialImage', 'social', 'canonicalUrl',
+            'siteTitle', 'brandPrimary', 'brandSecondary', 'organization', 'blogImageRatio', 'blogImageFit',
         ));
     }
 }

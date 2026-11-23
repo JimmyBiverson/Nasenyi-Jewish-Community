@@ -10,6 +10,7 @@ class SiteBranding
         'logo' => '/media/brand/icon-192.png',
         'favicon' => '/media/brand/icon-32.png',
         'social_image' => '/media/headers/about.jpg',
+        'inner_header_image' => '/media/headers/story.webp',
     ];
 
     /** @return array<string, string|null> */
@@ -18,13 +19,13 @@ class SiteBranding
         $attributes = request()->attributes;
 
         if (! $attributes->has(self::class)) {
-            $attributes->set(self::class, SiteSetting::pluck('value', 'key')->all());
+            $attributes->set(self::class, SiteSetting::query()->where('key', 'not like', 'integration.%')->pluck('value', 'key')->all());
         }
 
         return $attributes->get(self::class);
     }
 
-    /** @param 'logo'|'favicon'|'social_image' $key */
+    /** @param 'logo'|'favicon'|'social_image'|'inner_header_image' $key */
     public static function image(string $key): string
     {
         $image = self::settings()[$key] ?? '';

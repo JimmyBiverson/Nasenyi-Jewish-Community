@@ -1,4 +1,6 @@
 @php($logo = \App\Support\SiteBranding::image('logo'))
+@php($favicon = \App\Support\SiteBranding::image('favicon'))
+@php($faviconType = \App\Support\ImageUpload::mime($favicon))
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>@yield('title') · Nasenyi Administration</title>
-    <link rel="icon" href="{{ $logo }}">
+    <link rel="icon" href="{{ $favicon }}" type="{{ $faviconType }}">
     @include('admin.styles')
 </head>
 <body>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
 use App\Models\SiteSetting;
 use App\Support\ContentHtml;
+use App\Support\ImageUpload;
 use App\Support\StoryMedia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,11 +31,15 @@ class ContentMediaController extends Controller
     public function featured(Request $request, ContentEntry $content): RedirectResponse
     {
         $data = $this->validatedPhoto($request, focalPoint: true);
+        $previousImage = $content->image;
         $content->update([
             'image' => $this->imagePath($request, $data),
             'image_position_x' => $data['position_x'],
             'image_position_y' => $data['position_y'],
         ]);
+        if ($previousImage && $previousImage !== $content->image) {
+            ImageUpload::delete($previousImage);
+        }
 
         return $this->saved($content, 'featured', 'Featured image saved.');
     }
@@ -43,7 +48,11 @@ class ContentMediaController extends Controller
     {
         abort_if($content->slug === '', 404);
         $data = $this->validatedPhoto($request);
+        $previousImage = $content->header_image;
         $content->update(['header_image' => $this->imagePath($request, $data)]);
+        if ($previousImage && $previousImage !== $content->header_image) {
+            ImageUpload::delete($previousImage);
+        }
 
         return $this->saved($content, 'banner', 'Page banner saved.');
     }
@@ -51,12 +60,14 @@ class ContentMediaController extends Controller
     public function section(Request $request, ContentEntry $content, string $image): RedirectResponse
     {
         $data = $this->validatedPhoto($request, focalPoint: true, fit: true);
+        $previousImage = null;
 
-        DB::transaction(function () use ($request, $content, $image, $data): void {
+        DB::transaction(function () use ($request, $content, $image, $data, &$previousImage): void {
             $entry = ContentEntry::query()->whereKey($content->getKey())->lockForUpdate()->firstOrFail();
             abort_unless(isset(StoryMedia::list($entry->body ?? '')[$image]), 404);
 
             $overrides = $entry->body_image_overrides ?? [];
+            $previousImage = $overrides[$image]['image'] ?? null;
             if ($request->boolean('reset')) {
                 unset($overrides[$image]);
             } else {
@@ -66,6 +77,10 @@ class ContentMediaController extends Controller
             $entry->update(['body_image_overrides' => $overrides]);
         });
 
+        if ($previousImage && $previousImage !== ($content->refresh()->body_image_overrides[$image]['image'] ?? null)) {
+            ImageUpload::delete($previousImage);
+        }
+
         return $this->saved($content, 'image-'.$image, 'Section image saved.');
     }
 
@@ -74,8 +89,9 @@ class ContentMediaController extends Controller
         abort_if($content->slug !== '', 404);
         $data = $this->validatedPhoto($request, focalPoint: true, fit: true, required: true);
         $expected = $request->validate(['slide_signature' => ['required', 'string', 'size:64']])['slide_signature'];
+        $previousImage = null;
 
-        DB::transaction(function () use ($request, $content, $slide, $data, $expected): void {
+        DB::transaction(function () use ($request, $content, $slide, $data, $expected, &$previousImage): void {
             $entry = ContentEntry::query()->whereKey($content->getKey())->lockForUpdate()->firstOrFail();
             $slides = $entry->hero_slides ?? [];
             abort_unless(isset($slides[$slide]), 404);
@@ -84,9 +100,14 @@ class ContentMediaController extends Controller
                 throw ValidationException::withMessages(['image' => 'This slide changed. Reload the page and try again.']);
             }
 
+            $previousImage = $slides[$slide]['image'] ?? null;
             $slides[$slide] = array_replace($slides[$slide], $data, ['image' => $this->imagePath($request, $data)]);
             $entry->update(['hero_slides' => $slides]);
         });
+
+        if ($previousImage && $previousImage !== ($content->refresh()->hero_slides[$slide]['image'] ?? null)) {
+            ImageUpload::delete($previousImage);
+        }
 
         return $this->saved($content, 'slide-'.$slide, 'Slide image saved.');
     }
@@ -96,7 +117,7 @@ class ContentMediaController extends Controller
     {
         $rules = [
             'image' => [$required ? 'required_without:image_upload' : 'nullable', 'string', 'max:2048'],
-            'image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:'.StoryMedia::uploadLimit()],
+            'image_upload' => ImageUpload::rules('image_upload'),
         ];
 
         if ($focalPoint) {
@@ -109,8 +130,9 @@ class ContentMediaController extends Controller
         }
 
         $data = $request->validate($rules);
-        if (filled($data['image'] ?? null) && ! ContentHtml::safeUrl($data['image'])) {
-            throw ValidationException::withMessages(['image' => 'Use a website path or an HTTP(S) image address.']);
+        $image = $data['image'] ?? null;
+        if (filled($image) && (! ContentHtml::safeUrl($image) || (str_starts_with($image, '/') && ImageUpload::extension($image) === null))) {
+            throw ValidationException::withMessages(['image' => 'Use a website path to an image or an HTTP(S) image address.']);
         }
 
         unset($data['image_upload']);
@@ -125,7 +147,7 @@ class ContentMediaController extends Controller
             return $data['image'] ?? null;
         }
 
-        $path = $request->file('image_upload')->store('content', 'public');
+        $path = ImageUpload::store($request->file('image_upload'), 'content');
         if ($path === false) {
             throw ValidationException::withMessages(['image_upload' => 'The image could not be saved.']);
         }

@@ -191,7 +191,7 @@ class AdminTest extends TestCase
         Storage::fake('public');
         $this->actingAs(User::factory()->create(['role' => 'admin']));
 
-        $this->get(route('site.home'))->assertOk()->assertSee('<link rel="icon" href="/media/brand/icon-32.png">', false);
+        $this->get(route('site.home'))->assertOk()->assertSee('<link rel="icon" href="/media/brand/icon-32.png" type="image/png">', false);
         $this->get(route('admin.settings.edit'))->assertOk()->assertSeeInOrder(['Site logo', 'Site favicon', 'Default site image']);
 
         $preferences = array_fill_keys([
@@ -209,12 +209,11 @@ class AdminTest extends TestCase
         }
 
         $this->get(route('site.home'))->assertOk()
-            ->assertSee('<link rel="icon" href="'.$images['favicon'].'">', false)
+            ->assertSee('<link rel="icon" href="'.$images['favicon'].'" type="image/png">', false)
             ->assertSee('<img src="'.$images['logo'].'"', false)
             ->assertSee('<meta property="og:image" content="'.url($images['social_image']).'">', false);
         $this->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('<link rel="icon" href="'.$images['logo'].'">', false)
-            ->assertDontSee($images['favicon']);
+            ->assertSee('<link rel="icon" href="'.$images['favicon'].'" type="image/png">', false);
 
         $post = ContentEntry::factory()->create(['type' => 'post', 'image' => '/media/article-featured.jpg']);
         ContentEntry::factory()->create(['type' => 'post', 'image' => null]);
@@ -237,9 +236,9 @@ class AdminTest extends TestCase
             'favicon' => 'https://cdn.example.org/nasenyi.ico',
         ])->assertRedirect(route('admin.settings.edit'))->assertSessionHasNoErrors();
         $this->get(route('site.home'))->assertOk()
-            ->assertSee('<link rel="icon" href="https://cdn.example.org/nasenyi.ico">', false);
+            ->assertSee('<link rel="icon" href="https://cdn.example.org/nasenyi.ico" type="image/x-icon">', false);
 
         $this->post(route('admin.logout'));
-        $this->get(route('login'))->assertOk()->assertSee('<link rel="icon" href="'.$images['logo'].'">', false);
+        $this->get(route('login'))->assertOk()->assertSee('<link rel="icon" href="https://cdn.example.org/nasenyi.ico" type="image/x-icon">', false);
     }
 }

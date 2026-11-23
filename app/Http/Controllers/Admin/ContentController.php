@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ContentEntry;
 use App\Support\ContentHtml;
-use App\Support\StoryMedia;
+use App\Support\ImageUpload;
+use Dom\HTMLDocument;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -36,6 +37,7 @@ class ContentController extends Controller
     {
         return view('admin.content.form', [
             'entry' => new ContentEntry(['type' => $request->query('type') === 'post' ? 'post' : 'page', 'status' => 'draft']),
+            'editorHtml' => class_exists(HTMLDocument::class),
         ]);
     }
 
@@ -49,7 +51,7 @@ class ContentController extends Controller
 
     public function edit(ContentEntry $content): View
     {
-        return view('admin.content.form', ['entry' => $content]);
+        return view('admin.content.form', ['entry' => $content, 'editorHtml' => class_exists(HTMLDocument::class)]);
     }
 
     public function update(Request $request, ContentEntry $content): RedirectResponse
@@ -77,7 +79,7 @@ class ContentController extends Controller
             'body' => ['nullable', 'string', 'max:700000'],
             'summary' => ['nullable', 'string', 'max:1000'],
             'image' => ['nullable', 'string', 'max:2048'],
-            'image_upload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:'.StoryMedia::uploadLimit()],
+            'image_upload' => ImageUpload::rules('image_upload'),
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:600'],
             'social_image' => ['nullable', 'string', 'max:2048'],
@@ -107,13 +109,21 @@ class ContentController extends Controller
         }
 
         $data['slug'] = $slug;
-        $data['body'] = ContentHtml::sanitize($data['body'] ?? '');
+        $body = $data['body'] ?? '';
+        if (class_exists(HTMLDocument::class)) {
+            $data['body'] = ContentHtml::sanitize($body);
+        } elseif ($body !== (string) $entry->body) {
+            throw ValidationException::withMessages(['body' => 'Content changes need the PHP DOM extension. Other fields can be saved separately.']);
+        } else {
+            unset($data['body']);
+        }
         $data['tags'] = array_values(array_unique(array_filter(array_map('trim', explode(',', $data['tags'] ?? '')))));
         $data['published_at'] = $data['status'] === 'published' ? ($entry->published_at ?? now()) : null;
 
         foreach (['image', 'social_image'] as $attribute) {
-            if (filled($data[$attribute] ?? null) && ! ContentHtml::safeUrl($data[$attribute])) {
-                throw ValidationException::withMessages([$attribute => 'Use a website path or an HTTP(S) image address.']);
+            $value = $data[$attribute] ?? null;
+            if (filled($value) && (! ContentHtml::safeUrl($value) || (str_starts_with($value, '/') && ImageUpload::extension($value) === null))) {
+                throw ValidationException::withMessages([$attribute => 'Use a website path to an image or an HTTP(S) image address.']);
             }
         }
 
@@ -150,8 +160,10 @@ class ContentController extends Controller
             }
         }
 
+        $previousImage = $entry->image;
+
         if ($request->hasFile('image_upload')) {
-            $path = $request->file('image_upload')->store('content', 'public');
+            $path = ImageUpload::store($request->file('image_upload'), 'content');
             if ($path === false) {
                 throw ValidationException::withMessages(['image_upload' => 'The image could not be saved.']);
             }
@@ -160,5 +172,9 @@ class ContentController extends Controller
 
         unset($data['image_upload']);
         $entry->fill($data)->save();
+
+        if ($previousImage && $previousImage !== $entry->image) {
+            ImageUpload::delete($previousImage);
+        }
     }
 }

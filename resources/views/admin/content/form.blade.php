@@ -77,7 +77,7 @@
                 </div>
                 <div id="editor-source">
                     @php($oldBody = old('body', $entry->body ?? ''))
-                    <textarea id="body" class="textarea-html" name="body" rows="14">{{ \App\Support\ContentHtml::sanitize(is_string($oldBody) ? $oldBody : '') }}</textarea>
+                    <textarea id="body" class="textarea-html" name="body" rows="14">{{ $editorHtml ? \App\Support\ContentHtml::sanitize(is_string($oldBody) ? $oldBody : '') : (is_string($oldBody) ? $oldBody : '') }}</textarea>
                 </div>
             </div>
             <div class="field">
@@ -89,8 +89,8 @@
             </div>
             <div class="field">
                 <label for="image-upload">Upload a featured image</label>
-                <input id="image-upload" name="image_upload" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
-                <small>Up to {{ \Illuminate\Support\Number::fileSize(\App\Support\StoryMedia::uploadLimit() * 1024, precision: 1) }}. An upload replaces the image path above.</small>
+                <input id="image-upload" name="image_upload" type="file" accept="{{ \App\Support\ImageUpload::accept() }}">
+                <small>Up to {{ number_format(\App\Support\StoryMedia::uploadLimit()) }} KB. An upload replaces the image path above.</small>
             </div>
             @if($entry->type === 'post')
                 <div class="field">
@@ -114,6 +114,13 @@
             <div class="field full">
                 <label for="seo-description">Search description</label>
                 <textarea id="seo-description" name="seo_description" rows="3" maxlength="600">{{ old('seo_description', $entry->seo_description) }}</textarea>
+            </div>
+            <div class="field full" aria-label="Search result preview">
+                <strong>Search result preview</strong>
+                <small id="seo-preview-address"></small>
+                <strong id="seo-preview-title"></strong>
+                <p id="seo-preview-description"></p>
+                <small id="seo-preview-length"></small>
             </div>
         </div>
         <div class="actions">

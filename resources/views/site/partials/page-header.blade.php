@@ -6,8 +6,9 @@
     'parent' => null,
 ])
 @php
-    $sharedImage = \App\Models\SiteSetting::where('key', 'inner_header_image')->value('value');
-    $banner = \App\Support\PublicImage::banner($override ?: ($sharedImage ?: ($image ?: '/media/headers/story.webp')));
+    $sharedImage = \App\Support\SiteBranding::settings()['inner_header_image'] ?? null;
+    $bannerImage = $override ?: (filled($sharedImage) ? $sharedImage : ($image ?: \App\Support\SiteBranding::DEFAULTS['inner_header_image']));
+    $banner = \App\Support\PublicImage::banner($bannerImage);
 @endphp
 <header class="page-hero">
     <picture class="page-hero-photo" aria-hidden="true">

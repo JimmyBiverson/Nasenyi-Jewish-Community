@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Models\Donation;
+use App\Models\SiteSetting;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -13,15 +16,19 @@ use RuntimeException;
 
 class PesapalClient
 {
+    public const SETTINGS_PREFIX = 'integration.pesapal.';
+
+    private ?array $settings = null;
+
     private const SANDBOX_URL = 'https://cybqa.pesapal.com/pesapalv3/api';
 
     private const PRODUCTION_URL = 'https://pay.pesapal.com/v3/api';
 
     public function isConfigured(): bool
     {
-        return config('pesapal.enabled')
+        return $this->settings()['enabled']
             && $this->hasCredentials()
-            && Str::isUuid((string) config('pesapal.notification_id'))
+            && Str::isUuid((string) $this->settings()['notification_id'])
             && $this->publicUrl() !== null
             && $this->currencies() !== [];
     }
@@ -46,7 +53,7 @@ class PesapalClient
             'cancellation_url' => $this->publicUrl().URL::temporarySignedRoute('donations.cancel', now()->addHours(12), [
                 'donation' => $donation->reference,
             ], absolute: false),
-            'notification_id' => config('pesapal.notification_id'),
+            'notification_id' => $this->settings()['notification_id'],
             'billing_address' => [
                 'email_address' => $donation->donor_email,
                 'phone_number' => $donation->donor_phone ?? '',
@@ -92,6 +99,74 @@ class PesapalClient
         return $notificationId;
     }
 
+    public function adminStatus(): array
+    {
+        $settings = $this->settings();
+
+        return [
+            'enabled' => $settings['enabled'],
+            'credentials_saved' => $this->hasCredentials(),
+            'notification_id' => $settings['notification_id'],
+            'environment' => config('pesapal.environment'),
+            'ready' => $this->isConfigured(),
+        ];
+    }
+
+    public function saveAdminSettings(array $input): void
+    {
+        $settings = $this->settings();
+        if (filled($input['pesapal_key'] ?? null)) {
+            $settings['consumer_key'] = $input['pesapal_key'];
+            $settings['consumer_secret'] = $input['pesapal_secret'];
+            $settings['notification_id'] = null;
+        }
+        if (filled($input['pesapal_ipn'] ?? null)) {
+            $settings['notification_id'] = $input['pesapal_ipn'];
+        }
+
+        $settings['enabled'] = ! ($input['pesapal_register'] ?? false)
+            && (bool) ($input['pesapal_enable'] ?? false)
+            && filled($settings['consumer_key']) && filled($settings['consumer_secret'])
+            && Str::isUuid((string) $settings['notification_id']);
+
+        SiteSetting::query()->updateOrCreate(['key' => $this->settingsKey()], [
+            'value' => Crypt::encryptString(json_encode($settings, JSON_THROW_ON_ERROR)),
+        ]);
+        $this->settings = $settings;
+    }
+
+    private function settingsKey(): string
+    {
+        return self::SETTINGS_PREFIX.config('pesapal.environment');
+    }
+
+    private function settings(): array
+    {
+        if ($this->settings !== null) {
+            return $this->settings;
+        }
+
+        $defaults = [
+            'enabled' => (bool) config('pesapal.enabled'),
+            'consumer_key' => config('pesapal.consumer_key'),
+            'consumer_secret' => config('pesapal.consumer_secret'),
+            'notification_id' => config('pesapal.notification_id'),
+        ];
+        $encrypted = SiteSetting::query()->where('key', $this->settingsKey())->value('value');
+        if (blank($encrypted)) {
+            return $this->settings = $defaults;
+        }
+        try {
+            $stored = json_decode(Crypt::decryptString($encrypted), true, flags: JSON_THROW_ON_ERROR);
+        } catch (DecryptException|\JsonException) {
+            $stored = null;
+        }
+
+        return $this->settings = is_array($stored)
+            ? array_replace($defaults, array_intersect_key($stored, $defaults))
+            : ['enabled' => false, 'consumer_key' => null, 'consumer_secret' => null, 'notification_id' => null];
+    }
+
     private function urlFor(string $route): string
     {
         $baseUrl = $this->publicUrl();
@@ -108,7 +183,7 @@ class PesapalClient
         $environment = config('pesapal.environment');
 
         return ($environment === 'sandbox' || ($environment === 'production' && app()->isProduction()))
-            && filled(config('pesapal.consumer_key')) && filled(config('pesapal.consumer_secret'));
+            && filled($this->settings()['consumer_key']) && filled($this->settings()['consumer_secret']);
     }
 
     private function publicUrl(): ?string
@@ -132,8 +207,8 @@ class PesapalClient
         }
 
         $data = $this->json(fn () => $this->request()->post('/Auth/RequestToken', [
-            'consumer_key' => config('pesapal.consumer_key'),
-            'consumer_secret' => config('pesapal.consumer_secret'),
+            'consumer_key' => $this->settings()['consumer_key'],
+            'consumer_secret' => $this->settings()['consumer_secret'],
         ]));
 
         if (! is_string($data['token'] ?? null) || $data['token'] === '') {

@@ -77,12 +77,16 @@ class SiteController extends Controller
         if ($term !== '') {
             $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
             $matches = ContentEntry::published()
+                ->select(['id', 'slug', 'type', 'title', 'summary', 'image', 'image_position_x', 'image_position_y', 'category', 'published_at'])
                 ->where(function ($query) use ($pattern): void {
                     $query->whereRaw("title LIKE ? ESCAPE '!'", [$pattern])
                         ->orWhereRaw("summary LIKE ? ESCAPE '!'", [$pattern])
+                        ->orWhereRaw("category LIKE ? ESCAPE '!'", [$pattern])
+                        ->orWhereRaw("slug LIKE ? ESCAPE '!'", [$pattern])
                         ->orWhereRaw("body LIKE ? ESCAPE '!'", [$pattern]);
                 })
-                ->orderByDesc('published_at')->orderBy('title')->paginate(12)->withQueryString();
+                ->orderByRaw("CASE WHEN title LIKE ? ESCAPE '!' THEN 0 WHEN summary LIKE ? ESCAPE '!' THEN 1 ELSE 2 END", [$pattern, $pattern])
+                ->orderByDesc('published_at')->orderBy('title')->orderBy('id')->paginate(12)->withQueryString();
         }
 
         return view('site.search', compact('term', 'matches'));
