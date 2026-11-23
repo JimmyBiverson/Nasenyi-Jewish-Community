@@ -100,7 +100,8 @@ class PublicWebsiteTest extends TestCase
         $index = $this->get('/updates/')->assertOk()
             ->assertSee('--post-image-ratio: 16 / 9; --post-image-fit: contain')
             ->assertSee('class="page-hero"', false)
-            ->assertSee('/storage/content/shared.jpg')
+            ->assertSee('/media/headers/updates.webp')
+            ->assertDontSee('/storage/content/shared.jpg')
             ->assertDontSee('/storage/content/shared.webp')
             ->assertSee('--photo-position: 25% 65%')
             ->assertSee('/storage/content/post.jpg');
@@ -111,6 +112,39 @@ class PublicWebsiteTest extends TestCase
             ->assertSee('class="page-hero"', false)
             ->assertSee('/storage/content/article-banner.jpg')
             ->assertDontSee('/storage/content/article-banner-sm.jpg');
+    }
+
+    public function test_inner_page_heroes_use_page_specific_images(): void
+    {
+        SiteSetting::factory()->create(['key' => 'inner_header_image', 'value' => '/storage/content/shared.jpg']);
+
+        $pages = [
+            '/updates/' => '/media/headers/updates.webp',
+            '/donation-history/' => '/media/headers/gallery.webp',
+            '/contact-us/' => '/media/headers/contact.webp',
+            '/events/' => '/media/headers/events.webp',
+            '/search/' => '/media/headers/search.webp',
+            '/donation/' => '/media/headers/donation.webp',
+        ];
+
+        foreach ($pages as $url => $image) {
+            $this->get($url)->assertOk()
+                ->assertSee('class="page-hero"', false)
+                ->assertSee($image)
+                ->assertDontSee('/storage/content/shared.jpg');
+        }
+
+        ContentEntry::factory()->create([
+            'slug' => 'about-us',
+            'type' => 'page',
+            'header_image' => '/storage/content/custom-banner.jpg',
+        ]);
+
+        $this->get('/about-us/')->assertOk()
+            ->assertSee('class="page-hero"', false)
+            ->assertSee('/storage/content/custom-banner.jpg')
+            ->assertDontSee('/media/headers/about.webp')
+            ->assertDontSee('/storage/content/shared.jpg');
     }
 
     public function test_unpublished_content_is_excluded_from_public_routes_and_search(): void

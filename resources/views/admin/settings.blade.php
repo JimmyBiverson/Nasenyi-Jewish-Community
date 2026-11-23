@@ -40,6 +40,7 @@
                                 'logo' => 'Shown on the website and in link previews that use the site logo.',
                                 'favicon' => 'Shown in browser tabs. JPEG, PNG, WebP, AVIF, GIF, BMP, and ICO are supported.',
                                 'social_image' => 'Used as the image in shared links when a page or post has no featured image.',
+                                'inner_header_image' => 'Fallback image for pages without their own banner. Individual pages can still use a different banner in Manage images.',
                                 default => 'Individual pages can use a different banner in Manage images.',
                             } }}
                             Maximum {{ number_format($imageLimit) }} KB per file.

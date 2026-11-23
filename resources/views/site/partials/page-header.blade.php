@@ -7,7 +7,7 @@
 ])
 @php
     $sharedImage = \App\Support\SiteBranding::settings()['inner_header_image'] ?? null;
-    $bannerImage = $override ?: (filled($sharedImage) ? $sharedImage : ($image ?: \App\Support\SiteBranding::DEFAULTS['inner_header_image']));
+    $bannerImage = $override ?: ($image ?: (filled($sharedImage) ? $sharedImage : \App\Support\SiteBranding::DEFAULTS['inner_header_image']));
     $banner = \App\Support\PublicImage::banner($bannerImage);
 @endphp
 <header class="page-hero">

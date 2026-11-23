@@ -465,8 +465,16 @@ main::before {
     align-items: center;
     text-align: center;
 }
-.page-hero-photo { z-index: -3; }
-.page-hero-photo img { object-position: center 45%; }
+.page-hero-photo {
+    z-index: -3;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+.page-hero-photo img {
+    object-fit: cover;
+    object-position: center center;
+}
 .page-hero-shade {
     z-index: -2;
     background: radial-gradient(ellipse at center, #0b2749b8, #07172bea 86%), linear-gradient(180deg, #061629ab, #0719327d);
